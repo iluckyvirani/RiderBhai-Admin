@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F4F1EA] text-[#1C1C1C] antialiased selection:bg-[#F15A24] selection:text-white;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #F15A24 0%, #FF7A45 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #F15A24 0%, #E8380D 100%);
+}
+
+.active-press:active {
+  transform: scale(0.97);
+}

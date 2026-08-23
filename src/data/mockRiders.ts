@@ -1,0 +1,58 @@
+import { Rider } from '../types';
+
+export const CURRENT_RIDER: Rider = {
+  id: 'rdr-current',
+  name: 'Rohan Mehra',
+  phone: '+91 98199 88776',
+  email: 'rohan.mehra@example.com',
+  avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+  gender: 'male',
+  city: 'Delhi NCR',
+  idVerified: true,
+  emergencyContact: '+91 98111 22334 (Brother - Karan)',
+  rating: 4.9,
+  totalRides: 18,
+  memberSince: 'May 2023',
+};
+
+export const OTHER_RIDERS: Rider[] = [
+  {
+    id: 'rdr-2',
+    name: 'Sneha Kapur',
+    phone: '+91 98201 55667',
+    email: 'sneha.k@example.com',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    gender: 'female',
+    city: 'Mumbai',
+    idVerified: true,
+    rating: 5.0,
+    totalRides: 12,
+    memberSince: 'Aug 2023',
+  },
+  {
+    id: 'rdr-3',
+    name: 'Tanmay Bhattacharya',
+    phone: '+91 97110 33445',
+    email: 'tanmay.b@example.com',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    gender: 'male',
+    city: 'Bangalore',
+    idVerified: true,
+    rating: 4.8,
+    totalRides: 9,
+    memberSince: 'Oct 2023',
+  },
+  {
+    id: 'rdr-4',
+    name: 'Simran Walia',
+    phone: '+91 99880 77665',
+    email: 'simran.w@example.com',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    gender: 'female',
+    city: 'Chandigarh',
+    idVerified: false,
+    rating: 4.7,
+    totalRides: 4,
+    memberSince: 'Feb 2024',
+  },
+];
