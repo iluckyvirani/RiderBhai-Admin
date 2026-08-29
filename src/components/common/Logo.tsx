@@ -1,9 +1,10 @@
 import React from 'react';
 
-interface LogoProps {
+export interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showTagline?: boolean;
   variant?: 'full' | 'icon-only' | 'light';
+  theme?: 'dark' | 'light';
   className?: string;
 }
 
@@ -11,8 +12,11 @@ export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   showTagline = true,
   variant = 'full',
+  theme,
   className = '',
 }) => {
+  const isDarkBg = variant === 'light' || theme === 'dark';
+
   const iconSizes = {
     sm: 'w-7 h-7',
     md: 'w-9 h-9',
@@ -91,11 +95,11 @@ export const Logo: React.FC<LogoProps> = ({
       <div className="flex flex-col justify-center">
         <div className="flex items-center">
           <span className={`font-display font-extrabold tracking-tight ${titleSizes[size]} text-[#F15A24]`}>
-            Ride<span className="text-[#1C1C1C]">bhai</span>
+            Ride<span className={isDarkBg ? 'text-white' : 'text-[#1C1C1C]'}>bhai</span>
           </span>
         </div>
         {showTagline && (
-          <span className={`font-semibold text-[#1C1C1C] opacity-80 uppercase ${taglineSizes[size]}`}>
+          <span className={`font-semibold opacity-80 uppercase ${taglineSizes[size]} ${isDarkBg ? 'text-white/80' : 'text-[#1C1C1C]'}`}>
             Your Travel Buddy
           </span>
         )}

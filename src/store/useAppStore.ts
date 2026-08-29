@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   UserRole,
   Driver,
+  DriverStatus,
+  DriverDocuments,
+  Vehicle,
   Rider,
   Ride,
   EnrichedRide,
@@ -12,6 +15,13 @@ import {
   NotificationItem,
   DisputeItem,
   AppViewMode,
+  TravelAgency,
+  AgencyStatus,
+  AgencyDocuments,
+  AgencyPackage,
+  AgencyActiveSubscription,
+  AgencyTripPost,
+  AgencyTripStatus,
 } from '../types';
 import { INITIAL_DRIVERS } from '../data/mockDrivers';
 import { INITIAL_RIDES } from '../data/mockRides';
@@ -22,6 +32,12 @@ import { INITIAL_BOOKINGS } from '../data/mockBookings';
 import { INITIAL_CHATS } from '../data/mockChats';
 import { INITIAL_DISPUTES } from '../data/mockDisputes';
 import { INITIAL_NOTIFICATIONS } from '../data/mockNotifications';
+import {
+  INITIAL_AGENCIES,
+  INITIAL_AGENCY_PACKAGES,
+  INITIAL_AGENCY_SUBSCRIPTIONS,
+  INITIAL_AGENCY_TRIPS,
+} from '../data/mockAgencies';
 
 const STORAGE_KEYS = {
   ROLE: 'ridebhai_role',
@@ -39,6 +55,11 @@ const STORAGE_KEYS = {
   APP_VIEW: 'ridebhai_app_view_v1',
   RIDER_AUTH: 'ridebhai_rider_auth_v1',
   DRIVER_AUTH: 'ridebhai_driver_auth_v1',
+  AGENCY_AUTH: 'ridebhai_agency_auth_v1',
+  AGENCIES: 'ridebhai_agencies_v1',
+  AGENCY_PACKAGES: 'ridebhai_agency_packages_v1',
+  AGENCY_SUBSCRIPTIONS: 'ridebhai_agency_subscriptions_v1',
+  AGENCY_TRIPS: 'ridebhai_agency_trips_v1',
 };
 
 // Safe JSON parser from LocalStorage
@@ -60,16 +81,15 @@ function saveToStorage<T>(key: string, value: T): void {
   }
 }
 
-// Global in-memory bus for listener synchronization across re-renders
 let storeListeners: Array<() => void> = [];
 const notifyListeners = () => storeListeners.forEach((l) => l());
 
 export function useAppStore() {
-  // 1. Core State Hooks initialized from LocalStorage
   const [appView, setAppViewState] = useState<AppViewMode>(() => loadFromStorage(STORAGE_KEYS.APP_VIEW, 'landing'));
   const [isRiderLoggedIn, setIsRiderLoggedInState] = useState<boolean>(() => loadFromStorage(STORAGE_KEYS.RIDER_AUTH, false));
   const [isDriverLoggedIn, setIsDriverLoggedInState] = useState<boolean>(() => loadFromStorage(STORAGE_KEYS.DRIVER_AUTH, false));
-  const [role, setRoleState] = useState<UserRole>(() => loadFromStorage(STORAGE_KEYS.ROLE, 'rider'));
+  const [isAgencyLoggedIn, setIsAgencyLoggedInState] = useState<boolean>(() => loadFromStorage(STORAGE_KEYS.AGENCY_AUTH, false));
+  const [role, setRoleState] = useState<UserRole>(() => loadFromStorage(STORAGE_KEYS.ROLE, 'admin'));
   const [hasOnboarded, setHasOnboardedState] = useState<boolean>(() => loadFromStorage(STORAGE_KEYS.ONBOARDED, true));
   const [drivers, setDriversState] = useState<Driver[]>(() => loadFromStorage(STORAGE_KEYS.DRIVERS, INITIAL_DRIVERS));
   const [rides, setRidesState] = useState<Ride[]>(() => loadFromStorage(STORAGE_KEYS.RIDES, INITIAL_RIDES));
@@ -81,19 +101,26 @@ export function useAppStore() {
   const [disputes, setDisputesState] = useState<DisputeItem[]>(() => loadFromStorage(STORAGE_KEYS.DISPUTES, INITIAL_DISPUTES));
   const [notifications, setNotificationsState] = useState<NotificationItem[]>(() => loadFromStorage(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS));
 
-  // Current active driver profile (defaults to Aman Singhal drv-current)
+  // Agency specific state
+  const [agencies, setAgenciesState] = useState<TravelAgency[]>(() => loadFromStorage(STORAGE_KEYS.AGENCIES, INITIAL_AGENCIES));
+  const [agencyPackages, setAgencyPackagesState] = useState<AgencyPackage[]>(() => loadFromStorage(STORAGE_KEYS.AGENCY_PACKAGES, INITIAL_AGENCY_PACKAGES));
+  const [agencySubscriptions, setAgencySubscriptionsState] = useState<AgencyActiveSubscription[]>(() => loadFromStorage(STORAGE_KEYS.AGENCY_SUBSCRIPTIONS, INITIAL_AGENCY_SUBSCRIPTIONS));
+  const [agencyTripPosts, setAgencyTripPostsState] = useState<AgencyTripPost[]>(() => loadFromStorage(STORAGE_KEYS.AGENCY_TRIPS, INITIAL_AGENCY_TRIPS));
+
   const currentDriver = useMemo(() => {
     return drivers.find((d) => d.id === 'drv-current') || drivers[0];
   }, [drivers]);
 
-  // View Navigation
+  const currentAgency = useMemo(() => {
+    return agencies.find((a) => a.id === 'agency-current') || agencies[0];
+  }, [agencies]);
+
   const setAppView = useCallback((view: AppViewMode) => {
     setAppViewState(view);
     saveToStorage(STORAGE_KEYS.APP_VIEW, view);
     notifyListeners();
   }, []);
 
-  // Auth actions
   const loginRider = useCallback((phone: string, name?: string) => {
     setIsRiderLoggedInState(true);
     saveToStorage(STORAGE_KEYS.RIDER_AUTH, true);
@@ -117,7 +144,7 @@ export function useAppStore() {
     notifyListeners();
   }, []);
 
-  const loginDriver = useCallback((phone: string, name?: string, vehicleInfo?: any) => {
+  const loginDriver = useCallback((phone: string, name?: string, vehicleInfo?: any, initialStatus?: DriverStatus) => {
     setIsDriverLoggedInState(true);
     saveToStorage(STORAGE_KEYS.DRIVER_AUTH, true);
     setDriversState((prev) => {
@@ -127,6 +154,7 @@ export function useAppStore() {
             ...d,
             name: name || d.name,
             phone: phone || d.phone,
+            status: initialStatus !== undefined ? initialStatus : d.status,
             vehicle: vehicleInfo || d.vehicle,
           };
         }
@@ -144,8 +172,38 @@ export function useAppStore() {
     notifyListeners();
   }, []);
 
+  const loginAgency = useCallback((phone: string, agencyName?: string, ownerName?: string, city?: string) => {
+    setIsAgencyLoggedInState(true);
+    saveToStorage(STORAGE_KEYS.AGENCY_AUTH, true);
+    setAgenciesState((prev) => {
+      const exists = prev.find((a) => a.id === 'agency-current');
+      if (exists) {
+        const updated = prev.map((a) => {
+          if (a.id === 'agency-current') {
+            return {
+              ...a,
+              agencyName: agencyName || a.agencyName,
+              ownerName: ownerName || a.ownerName,
+              phone: phone || a.phone,
+              city: city || a.city,
+            };
+          }
+          return a;
+        });
+        saveToStorage(STORAGE_KEYS.AGENCIES, updated);
+        return updated;
+      }
+      return prev;
+    });
+    notifyListeners();
+  }, []);
 
-  // Persist whenever state changes
+  const logoutAgency = useCallback(() => {
+    setIsAgencyLoggedInState(false);
+    saveToStorage(STORAGE_KEYS.AGENCY_AUTH, false);
+    notifyListeners();
+  }, []);
+
   const setRole = useCallback((newRole: UserRole) => {
     setRoleState(newRole);
     saveToStorage(STORAGE_KEYS.ROLE, newRole);
@@ -230,7 +288,42 @@ export function useAppStore() {
     notifyListeners();
   }, []);
 
-  // --- CORE BOOST LOGIC: Computed Live On Every Read ---
+  const updateAgencies = useCallback((updater: (prev: TravelAgency[]) => TravelAgency[]) => {
+    setAgenciesState((prev) => {
+      const next = updater(prev);
+      saveToStorage(STORAGE_KEYS.AGENCIES, next);
+      return next;
+    });
+    notifyListeners();
+  }, []);
+
+  const updateAgencyPackages = useCallback((updater: (prev: AgencyPackage[]) => AgencyPackage[]) => {
+    setAgencyPackagesState((prev) => {
+      const next = updater(prev);
+      saveToStorage(STORAGE_KEYS.AGENCY_PACKAGES, next);
+      return next;
+    });
+    notifyListeners();
+  }, []);
+
+  const updateAgencySubscriptions = useCallback((updater: (prev: AgencyActiveSubscription[]) => AgencyActiveSubscription[]) => {
+    setAgencySubscriptionsState((prev) => {
+      const next = updater(prev);
+      saveToStorage(STORAGE_KEYS.AGENCY_SUBSCRIPTIONS, next);
+      return next;
+    });
+    notifyListeners();
+  }, []);
+
+  const updateAgencyTripPosts = useCallback((updater: (prev: AgencyTripPost[]) => AgencyTripPost[]) => {
+    setAgencyTripPostsState((prev) => {
+      const next = updater(prev);
+      saveToStorage(STORAGE_KEYS.AGENCY_TRIPS, next);
+      return next;
+    });
+    notifyListeners();
+  }, []);
+
   const isDriverBoosted = useCallback((driverId: string): boolean => {
     const now = Date.now();
     return driverPackages.some((dp) => dp.driverId === driverId && dp.expiresAt > now);
@@ -244,9 +337,48 @@ export function useAppStore() {
     return { pkg, expiresAt: activeDP.expiresAt };
   }, [driverPackages, packages]);
 
-  // --- SEARCH & RANKING SELECTOR ---
-  // Strictly partitions into [Featured / Boosted] and [Regular], sorts each group, and concatenates.
-  // CRITICAL RULE: Strips driver phone number on regular rides before handing to UI.
+  const getAgencyActiveSubscription = useCallback((agencyId: string): { sub: AgencyActiveSubscription; pkg: AgencyPackage } | null => {
+    const now = Date.now();
+    const activeSub = agencySubscriptions.find((s) => s.agencyId === agencyId && s.expiresAt > now && s.postsRemaining > 0);
+    if (!activeSub) return null;
+    const pkg = agencyPackages.find((p) => p.id === activeSub.packageId) || agencyPackages[0];
+    return { sub: activeSub, pkg };
+  }, [agencySubscriptions, agencyPackages]);
+
+  const isAgencyVerified = useCallback((agencyId: string): boolean => {
+    const target = agencies.find((a) => a.id === agencyId);
+    return target ? target.status === 'verified' : false;
+  }, [agencies]);
+
+  const canAgencyPost = useCallback((agencyId: string = currentAgency.id): { canPost: boolean; reason?: string; code?: 'not_verified' | 'no_package' } => {
+    const target = agencies.find((a) => a.id === agencyId) || currentAgency;
+    if (target.status !== 'verified') {
+      if (target.status === 'pending_verification') {
+        return {
+          canPost: false,
+          code: 'not_verified',
+          reason: 'Your agency documents are under verification by the Ride Bhai Admin team. You can post tour bookings once approved.',
+        };
+      }
+      return {
+        canPost: false,
+        code: 'not_verified',
+        reason: 'You must submit your business verification documents (GST / Trade License / PAN) and be verified by admin before posting.',
+      };
+    }
+
+    const subInfo = getAgencyActiveSubscription(agencyId);
+    if (!subInfo) {
+      return {
+        canPost: false,
+        code: 'no_package',
+        reason: 'Active Posting Package required. Please purchase an Agency Package to publish your tour bookings to drivers.',
+      };
+    }
+
+    return { canPost: true };
+  }, [agencies, currentAgency, getAgencyActiveSubscription]);
+
   const getRankedRides = useCallback(
     (filterParams?: {
       fromCity?: string;
@@ -267,7 +399,6 @@ export function useAppStore() {
         maxPrice,
       } = filterParams || {};
 
-      // 1. Initial filter
       const matched = rides.filter((ride) => {
         if (fromCity && !ride.fromCity.toLowerCase().includes(fromCity.toLowerCase())) return false;
         if (toCity && !ride.toCity.toLowerCase().includes(toCity.toLowerCase())) return false;
@@ -279,7 +410,6 @@ export function useAppStore() {
         return true;
       });
 
-      // 2. Separate into Featured & Regular groups based on LIVE driver package check
       const featuredGroup: EnrichedRide[] = [];
       const regularGroup: EnrichedRide[] = [];
 
@@ -291,7 +421,6 @@ export function useAppStore() {
         const activePkgInfo = getDriverActivePackage(driver.id);
 
         if (boosted) {
-          // Featured Ride: Includes Driver Phone and Full Contact CTA capability
           featuredGroup.push({
             ...ride,
             isFeatured: true,
@@ -305,11 +434,10 @@ export function useAppStore() {
               totalRides: driver.totalRides,
               vehicle: driver.vehicle,
               idVerified: driver.idVerified,
-              phone: driver.phone, // Included for featured
+              phone: driver.phone,
             },
           });
         } else {
-          // Regular Ride: Phone number is strictly OMITTED from the returned object (never sent to client)
           regularGroup.push({
             ...ride,
             isFeatured: false,
@@ -322,25 +450,19 @@ export function useAppStore() {
               totalRides: driver.totalRides,
               vehicle: driver.vehicle,
               idVerified: driver.idVerified,
-              // phone is undefined here
             },
           });
         }
       }
 
-      // 3. Sort each group internally (by departure time / rating)
       featuredGroup.sort((a, b) => (b.driver.rating || 0) - (a.driver.rating || 0));
       regularGroup.sort((a, b) => a.pricePerSeat - b.pricePerSeat);
 
-      // 4. Concatenate: ALL featured rides first, then regular rides (never interleave)
       return [...featuredGroup, ...regularGroup];
     },
     [rides, drivers, isDriverBoosted, getDriverActivePackage]
   );
 
-  // --- ACTIONS ---
-
-  // 1. Post a new Ride (Driver)
   const postRide = useCallback(
     (newRideData: Omit<Ride, 'id' | 'createdAt' | 'driverId'>) => {
       const newRide: Ride = {
@@ -351,7 +473,6 @@ export function useAppStore() {
       };
       updateRides((prev) => [newRide, ...prev]);
 
-      // Add driver notification
       const newNotif: NotificationItem = {
         id: `notif-${Date.now()}`,
         userId: currentDriver.id,
@@ -368,65 +489,6 @@ export function useAppStore() {
     [currentDriver, updateRides, updateNotifications]
   );
 
-  // 2. Book Seats (Rider)
-  const bookSeats = useCallback(
-    (rideId: string, seatsCount: number, paymentMethod: 'upi' | 'card' | 'wallet' = 'upi') => {
-      const ride = rides.find((r) => r.id === rideId);
-      if (!ride || ride.availableSeats < seatsCount) {
-        throw new Error('Seats not available');
-      }
-
-      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-      const newBooking: Booking = {
-        id: `bk-${Date.now()}`,
-        rideId,
-        riderId: currentRider.id,
-        driverId: ride.driverId,
-        seatsBooked: seatsCount,
-        totalPrice: ride.pricePerSeat * seatsCount,
-        status: ride.instantBooking ? 'confirmed' : 'pending',
-        pickupOtp: generatedOtp,
-        paymentMethod,
-        bookedAt: new Date().toISOString(),
-      };
-
-      // Decrement seats
-      updateRides((prev) =>
-        prev.map((r) => (r.id === rideId ? { ...r, availableSeats: r.availableSeats - seatsCount } : r))
-      );
-
-      // Save booking
-      updateBookings((prev) => [newBooking, ...prev]);
-
-      // Add Rider & Driver notifications
-      const riderNotif: NotificationItem = {
-        id: `notif-rdr-${Date.now()}`,
-        userId: currentRider.id,
-        userRole: 'rider',
-        title: ride.instantBooking ? 'Booking Confirmed! 🚗' : 'Booking Requested ⏳',
-        message: `Your trip from ${ride.fromCity} to ${ride.toCity} is ${ride.instantBooking ? 'confirmed. OTP: ' + generatedOtp : 'awaiting driver confirmation.'}`,
-        type: 'booking',
-        time: 'Just now',
-        read: false,
-      };
-      const driverNotif: NotificationItem = {
-        id: `notif-drv-${Date.now()}`,
-        userId: ride.driverId,
-        userRole: 'driver',
-        title: 'New Seat Booking! 🙋‍♂️',
-        message: `${currentRider.name} booked ${seatsCount} seat(s) for your ${ride.fromCity} → ${ride.toCity} ride.`,
-        type: 'booking',
-        time: 'Just now',
-        read: false,
-      };
-      updateNotifications((prev) => [riderNotif, driverNotif, ...prev]);
-
-      return newBooking;
-    },
-    [rides, currentRider, updateRides, updateBookings, updateNotifications]
-  );
-
-  // 3. Purchase Driver Boost Package
   const purchasePackage = useCallback(
     (packageId: string) => {
       const pkg = packages.find((p) => p.id === packageId);
@@ -443,13 +505,11 @@ export function useAppStore() {
         expiresAt,
       };
 
-      // Overwrite/extend existing package for current driver
       updateDriverPackages((prev) => {
         const filtered = prev.filter((dp) => dp.driverId !== currentDriver.id);
         return [newDriverPackage, ...filtered];
       });
 
-      // Notification
       const notif: NotificationItem = {
         id: `notif-pkg-${Date.now()}`,
         userId: currentDriver.id,
@@ -467,10 +527,9 @@ export function useAppStore() {
     [packages, currentDriver, updateDriverPackages, updateNotifications]
   );
 
-  // 4. Simulate Package Expiry (for live ranking demotion testing)
   const simulatePackageExpiry = useCallback(
     (driverId: string = currentDriver.id) => {
-      const pastTime = Date.now() - 1000 * 60; // 1 min ago
+      const pastTime = Date.now() - 1000 * 60;
       updateDriverPackages((prev) =>
         prev.map((dp) => (dp.driverId === driverId ? { ...dp, expiresAt: pastTime } : dp))
       );
@@ -478,9 +537,8 @@ export function useAppStore() {
     [currentDriver, updateDriverPackages]
   );
 
-  // 5. Driver Verification / Simulation
   const simulateDriverStatusChange = useCallback(
-    (driverId: string, status: 'verified' | 'rejected' | 'pending_verification', reason?: string) => {
+    (driverId: string, status: DriverStatus, reason?: string) => {
       updateDrivers((prev) =>
         prev.map((d) =>
           d.id === driverId
@@ -497,162 +555,33 @@ export function useAppStore() {
     [updateDrivers]
   );
 
-  // 6. Driver Accept / Reject Booking Request
-  const handleBookingRequest = useCallback(
-    (bookingId: string, action: 'accept' | 'reject') => {
-      updateBookings((prev) =>
-        prev.map((b) => {
-          if (b.id !== bookingId) return b;
-          return {
-            ...b,
-            status: action === 'accept' ? 'confirmed' : 'rejected',
-          };
-        })
-      );
-    },
-    [updateBookings]
-  );
-
-  // 7. Trip Lifecycle Simulation (Start ride, Complete ride)
-  const simulateTripStart = useCallback(
-    (bookingId: string) => {
-      updateBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId
-            ? { ...b, status: 'started', startedAt: new Date().toISOString() }
-            : b
-        )
-      );
-    },
-    [updateBookings]
-  );
-
-  const simulateTripComplete = useCallback(
-    (bookingId: string) => {
-      updateBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId
-            ? { ...b, status: 'completed', completedAt: new Date().toISOString() }
-            : b
-        )
-      );
-    },
-    [updateBookings]
-  );
-
-  // 8. Submit Rating / Review
-  const submitReview = useCallback(
-    (bookingId: string, rating: number, comment: string) => {
-      const targetBooking = bookings.find((b) => b.id === bookingId);
-      if (!targetBooking) return;
-
-      const review = {
-        rating,
-        comment,
-        createdAt: new Date().toISOString(),
-      };
-
-      updateBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, review } : b))
-      );
-
-      // Recompute driver rating
+  const submitDriverVerification = useCallback(
+    (documents: DriverDocuments, vehiclesList: Vehicle[]) => {
+      const primaryVehicle = vehiclesList.find((v) => v.isPrimary) || vehiclesList[0];
       updateDrivers((prev) =>
         prev.map((d) => {
-          if (d.id !== targetBooking.driverId) return d;
-          const newTotalReviews = (d.totalReviews || 0) + 1;
-          const newRating = Number((((d.rating * d.totalReviews) + rating) / newTotalReviews).toFixed(1));
-          return {
-            ...d,
-            rating: newRating,
-            totalReviews: newTotalReviews,
-          };
+          if (d.id === 'drv-current' || d.id === currentDriver.id) {
+            return {
+              ...d,
+              status: 'pending_verification' as DriverStatus,
+              idVerified: false,
+              rejectionReason: undefined,
+              documents: {
+                ...d.documents,
+                ...documents,
+                submittedAt: new Date().toISOString(),
+              },
+              vehicle: primaryVehicle || d.vehicle,
+              vehicles: vehiclesList.length > 0 ? vehiclesList : (d.vehicles || [primaryVehicle || d.vehicle]),
+            };
+          }
+          return d;
         })
       );
     },
-    [bookings, updateBookings, updateDrivers]
+    [currentDriver.id, updateDrivers]
   );
 
-  // 9. In-app Chat messaging
-  const sendChatMessage = useCallback(
-    (text: string, bookingId?: string, rideId?: string) => {
-      const newMsg: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        bookingId,
-        rideId,
-        senderId: role === 'driver' ? currentDriver.id : currentRider.id,
-        senderRole: role === 'driver' ? 'driver' : 'rider',
-        senderName: role === 'driver' ? currentDriver.name : currentRider.name,
-        text,
-        timestamp: 'Just now',
-      };
-      updateChats((prev) => [...prev, newMsg]);
-      return newMsg;
-    },
-    [role, currentDriver, currentRider, updateChats]
-  );
-
-  // 10. Update Rider Profile / Verify ID
-  const updateRiderProfile = useCallback(
-    (updates: Partial<Rider>) => {
-      setCurrentRiderState((prev) => {
-        const next = { ...prev, ...updates };
-        saveToStorage(STORAGE_KEYS.CURRENT_RIDER, next);
-        return next;
-      });
-    },
-    []
-  );
-
-  // 11. Admin CRUD on Packages
-  const savePackage = useCallback(
-    (pkg: Package) => {
-      updatePackages((prev) => {
-        const exists = prev.some((p) => p.id === pkg.id);
-        if (exists) {
-          return prev.map((p) => (p.id === pkg.id ? pkg : p));
-        }
-        return [...prev, pkg];
-      });
-    },
-    [updatePackages]
-  );
-
-  const deletePackage = useCallback(
-    (pkgId: string) => {
-      updatePackages((prev) => prev.filter((p) => p.id !== pkgId));
-    },
-    [updatePackages]
-  );
-
-  // 12. Resolve Dispute
-  const resolveDispute = useCallback(
-    (disputeId: string) => {
-      updateDisputes((prev) =>
-        prev.map((d) => (d.id === disputeId ? { ...d, status: 'resolved' } : d))
-      );
-    },
-    [updateDisputes]
-  );
-
-  // 13. Reset Entire Demo Data
-  const resetDemoData = useCallback(() => {
-    localStorage.clear();
-    setRoleState('rider');
-    setHasOnboardedState(false);
-    setDriversState(INITIAL_DRIVERS);
-    setRidesState(INITIAL_RIDES);
-    setPackagesState(INITIAL_PACKAGES);
-    setDriverPackagesState(INITIAL_DRIVER_PACKAGES);
-    setCurrentRiderState(CURRENT_RIDER);
-    setBookingsState(INITIAL_BOOKINGS);
-    setChatsState(INITIAL_CHATS);
-    setDisputesState(INITIAL_DISPUTES);
-    setNotificationsState(INITIAL_NOTIFICATIONS);
-    notifyListeners();
-  }, []);
-
-  // 14. Admin Grant Boost to specific driver
   const grantDriverBoost = useCallback(
     (driverId: string, packageId: string = 'pkg-weekly-boost') => {
       const pkg = packages.find((p) => p.id === packageId) || packages[0];
@@ -676,18 +605,270 @@ export function useAppStore() {
     [packages, updateDriverPackages]
   );
 
+  const savePackage = useCallback(
+    (pkg: Package) => {
+      updatePackages((prev) => {
+        const exists = prev.some((p) => p.id === pkg.id);
+        if (exists) {
+          return prev.map((p) => (p.id === pkg.id ? pkg : p));
+        }
+        return [...prev, pkg];
+      });
+    },
+    [updatePackages]
+  );
+
+  const deletePackage = useCallback(
+    (pkgId: string) => {
+      updatePackages((prev) => prev.filter((p) => p.id !== pkgId));
+    },
+    [updatePackages]
+  );
+
+  const resolveDispute = useCallback(
+    (disputeId: string) => {
+      updateDisputes((prev) =>
+        prev.map((d) => (d.id === disputeId ? { ...d, status: 'resolved' } : d))
+      );
+    },
+    [updateDisputes]
+  );
+
+  const submitAgencyVerification = useCallback(
+    (agencyId: string, docs: AgencyDocuments) => {
+      updateAgencies((prev) =>
+        prev.map((a) => {
+          if (a.id === agencyId || a.id === 'agency-current') {
+            return {
+              ...a,
+              status: 'pending_verification' as AgencyStatus,
+              idVerified: false,
+              rejectionReason: undefined,
+              documents: {
+                ...a.documents,
+                ...docs,
+                submittedAt: new Date().toISOString(),
+              },
+            };
+          }
+          return a;
+        })
+      );
+    },
+    [updateAgencies]
+  );
+
+  const adminVerifyAgency = useCallback(
+    (agencyId: string, status: AgencyStatus, reason?: string) => {
+      updateAgencies((prev) =>
+        prev.map((a) =>
+          a.id === agencyId
+            ? {
+                ...a,
+                status,
+                idVerified: status === 'verified',
+                rejectionReason: status === 'rejected' ? (reason || 'Verification documents were unclear or invalid.') : undefined,
+              }
+            : a
+        )
+      );
+    },
+    [updateAgencies]
+  );
+
+  const purchaseAgencyPackage = useCallback(
+    (agencyId: string, packageId: string) => {
+      const pkg = agencyPackages.find((p) => p.id === packageId);
+      if (!pkg) throw new Error('Agency Package not found');
+
+      const now = Date.now();
+      const expiresAt = now + pkg.durationDays * 24 * 60 * 60 * 1000;
+
+      const newSub: AgencyActiveSubscription = {
+        id: `sub-${Date.now()}`,
+        agencyId,
+        packageId,
+        purchasedAt: now,
+        expiresAt,
+        postsRemaining: pkg.postLimit,
+      };
+
+      updateAgencySubscriptions((prev) => {
+        const filtered = prev.filter((s) => s.agencyId !== agencyId);
+        return [newSub, ...filtered];
+      });
+
+      updateAgencies((prev) =>
+        prev.map((a) => (a.id === agencyId ? { ...a, activePackageId: packageId } : a))
+      );
+
+      return newSub;
+    },
+    [agencyPackages, updateAgencySubscriptions, updateAgencies]
+  );
+
+  const postAgencyTrip = useCallback(
+    (tripData: {
+      fromCity: string;
+      toCity: string;
+      passengers: number;
+      duration: string;
+      startDate: string;
+      endDate?: string;
+      pickupTime?: string;
+      pickupLocation: string;
+      dropLocation: string;
+      requiredVehicleType: string;
+      totalCustomerPrice: number;
+      agencyCommission: number;
+      tripDetails: string;
+      routeHighlights?: string[];
+      tourType?: string;
+      tollTaxOption?: string;
+      parkingOption?: string;
+      driverNightAllowance?: string;
+      kmLimit?: string;
+      luggageCapacity?: string;
+      driverPreferences?: string;
+      paymentTerms?: string;
+      payoutMode?: string;
+    }) => {
+      const gateCheck = canAgencyPost(currentAgency.id);
+      if (!gateCheck.canPost) {
+        throw new Error(gateCheck.reason || 'Cannot post trip.');
+      }
+
+      const driverNet = Number(tripData.totalCustomerPrice) - Number(tripData.agencyCommission);
+      const cleanPhone = currentAgency.whatsappPhone || currentAgency.phone.replace(/[^0-9]/g, '');
+
+      const newTrip: AgencyTripPost = {
+        ...tripData,
+        id: `trip-agency-${Date.now()}`,
+        agencyId: currentAgency.id,
+        agencyName: currentAgency.agencyName,
+        agencyPhone: currentAgency.phone,
+        whatsappNumber: cleanPhone,
+        agencyCity: currentAgency.city,
+        agencyRating: currentAgency.rating || 4.9,
+        driverNetPayout: driverNet > 0 ? driverNet : 0,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+
+      updateAgencyTripPosts((prev) => [newTrip, ...prev]);
+
+      updateAgencySubscriptions((prev) =>
+        prev.map((s) => {
+          if (s.agencyId === currentAgency.id && s.postsRemaining < 9000) {
+            return { ...s, postsRemaining: Math.max(0, s.postsRemaining - 1) };
+          }
+          return s;
+        })
+      );
+
+      updateAgencies((prev) =>
+        prev.map((a) => (a.id === currentAgency.id ? { ...a, totalToursPosted: (a.totalToursPosted || 0) + 1 } : a))
+      );
+
+      return newTrip;
+    },
+    [currentAgency, canAgencyPost, updateAgencyTripPosts, updateAgencySubscriptions, updateAgencies]
+  );
+
+  const claimAgencyTrip = useCallback(
+    (tripId: string, driverId?: string, driverName?: string, driverPhone?: string) => {
+      const dId = driverId || currentDriver.id;
+      const dName = driverName || currentDriver.name;
+      const dPhone = driverPhone || currentDriver.phone;
+
+      updateAgencyTripPosts((prev) =>
+        prev.map((t) => {
+          if (t.id !== tripId) return t;
+          return {
+            ...t,
+            status: 'claimed' as AgencyTripStatus,
+            claimedByDriverId: dId,
+            claimedByDriverName: dName,
+            claimedByDriverPhone: dPhone,
+            claimedAt: new Date().toISOString(),
+          };
+        })
+      );
+    },
+    [currentDriver, updateAgencyTripPosts]
+  );
+
+  const updateAgencyTripStatus = useCallback(
+    (tripId: string, status: AgencyTripStatus) => {
+      updateAgencyTripPosts((prev) =>
+        prev.map((t) => (t.id === tripId ? { ...t, status } : t))
+      );
+    },
+    [updateAgencyTripPosts]
+  );
+
+  const saveAgencyPackage = useCallback(
+    (pkg: AgencyPackage) => {
+      updateAgencyPackages((prev) => {
+        const exists = prev.some((p) => p.id === pkg.id);
+        if (exists) {
+          return prev.map((p) => (p.id === pkg.id ? pkg : p));
+        }
+        return [...prev, pkg];
+      });
+    },
+    [updateAgencyPackages]
+  );
+
+  const deleteAgencyPackage = useCallback(
+    (pkgId: string) => {
+      updateAgencyPackages((prev) => prev.filter((p) => p.id !== pkgId));
+    },
+    [updateAgencyPackages]
+  );
+
+  const updateCurrentAgency = useCallback(
+    (updates: Partial<TravelAgency>) => {
+      updateAgencies((prev) =>
+        prev.map((a) => (a.id === 'agency-current' || a.id === currentAgency.id ? { ...a, ...updates } : a))
+      );
+    },
+    [currentAgency.id, updateAgencies]
+  );
+
+  const resetDemoData = useCallback(() => {
+    localStorage.clear();
+    setRoleState('admin');
+    setHasOnboardedState(false);
+    setDriversState(INITIAL_DRIVERS);
+    setRidesState(INITIAL_RIDES);
+    setPackagesState(INITIAL_PACKAGES);
+    setDriverPackagesState(INITIAL_DRIVER_PACKAGES);
+    setCurrentRiderState(CURRENT_RIDER);
+    setBookingsState(INITIAL_BOOKINGS);
+    setChatsState(INITIAL_CHATS);
+    setDisputesState(INITIAL_DISPUTES);
+    setNotificationsState(INITIAL_NOTIFICATIONS);
+    setAgenciesState(INITIAL_AGENCIES);
+    setAgencyPackagesState(INITIAL_AGENCY_PACKAGES);
+    setAgencySubscriptionsState(INITIAL_AGENCY_SUBSCRIPTIONS);
+    setAgencyTripPostsState(INITIAL_AGENCY_TRIPS);
+    setIsAgencyLoggedInState(false);
+    notifyListeners();
+  }, []);
+
   return {
-    // App View & Auth State
     appView,
     setAppView,
     isRiderLoggedIn,
     isDriverLoggedIn,
+    isAgencyLoggedIn,
     loginRider,
     logoutRider,
     loginDriver,
     logoutDriver,
-
-    // Role & Entity State
+    loginAgency,
+    logoutAgency,
     role,
     setRole,
     hasOnboarded,
@@ -702,31 +883,39 @@ export function useAppStore() {
     chats,
     disputes,
     notifications,
-
-    // Live Derived / Selectors
+    agencies,
+    agencyPackages,
+    agencySubscriptions,
+    agencyTripPosts,
+    currentAgency,
     isDriverBoosted,
     getDriverActivePackage,
     getRankedRides,
-
-    // Actions
+    getAgencyActiveSubscription,
+    isAgencyVerified,
+    canAgencyPost,
     postRide,
-    bookSeats,
     purchasePackage,
     grantDriverBoost,
     simulatePackageExpiry,
     simulateDriverStatusChange,
-    handleBookingRequest,
-    simulateTripStart,
-    simulateTripComplete,
-    submitReview,
-    sendChatMessage,
-    updateRiderProfile,
+    submitDriverVerification,
     savePackage,
     deletePackage,
     resolveDispute,
     resetDemoData,
     updateNotifications,
     updateDriverPackages,
+    submitAgencyVerification,
+    adminVerifyAgency,
+    purchaseAgencyPackage,
+    postAgencyTrip,
+    claimAgencyTrip,
+    updateAgencyTripStatus,
+    saveAgencyPackage,
+    deleteAgencyPackage,
+    updateCurrentAgency,
+    updateAgencies,
+    updateAgencyTripPosts,
   };
 }
-
