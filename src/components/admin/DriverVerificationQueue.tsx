@@ -37,8 +37,8 @@ export const DriverVerificationQueue: React.FC = () => {
     <div className="space-y-4 pb-24 animate-fade-in">
       <div className="flex items-center justify-between px-1">
         <div>
-          <h3 className="text-sm font-extrabold text-[#1C1C1C]">KYC Verification Queue</h3>
-          <p className="text-xs text-[#6B6B6B]">Review uploaded driver documents</p>
+          <h3 className="text-sm font-extrabold text-[#1C1C1C]">Partner KYC queue</h3>
+          <p className="text-xs text-[#6B6B6B]">Review partner licence, RC, and ID documents</p>
         </div>
         <span className="text-xs font-extrabold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
           {pendingDrivers.length} Pending

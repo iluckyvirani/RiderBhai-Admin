@@ -53,10 +53,10 @@ export const AllAgenciesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C]">
-            All Registered Travel Agencies ({agencies.length})
+            Partner firms ({agencies.length})
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-1">
-            Manage partner travel agencies, subscriptions, and tour lead activity
+            Travel firms that post cars and tours. Posting plans are the only in-app payment.
           </p>
         </div>
 

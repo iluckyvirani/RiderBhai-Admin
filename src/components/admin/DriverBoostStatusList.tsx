@@ -37,7 +37,7 @@ export const DriverBoostStatusList: React.FC = () => {
     <div className="space-y-4 pb-24 animate-fade-in">
       <div className="flex items-center justify-between px-1">
         <div>
-          <h3 className="text-sm font-extrabold text-[#1C1C1C]">Driver Boost Directory</h3>
+          <h3 className="text-sm font-extrabold text-[#1C1C1C]">Legacy boost directory</h3>
           <p className="text-xs text-[#6B6B6B]">Live computed package statuses & rank controls</p>
         </div>
         <span className="text-xs font-extrabold text-[#F15A24] bg-[#FFF0EB] px-2.5 py-1 rounded-full border border-[#FFD8CB]">

@@ -67,7 +67,7 @@ export const AgencyVerificationQueue: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-extrabold text-[#1C1C1C]">
-              Agency KYC Verification Queue
+              Firm KYC queue
             </h2>
             {pendingCount > 0 && (
               <span className="px-2.5 py-0.5 rounded-full bg-[#F15A24] text-white text-xs font-extrabold">
@@ -76,7 +76,7 @@ export const AgencyVerificationQueue: React.FC = () => {
             )}
           </div>
           <p className="text-xs text-[#6B6B6B] mt-1">
-            Review GSTIN, Trade Licenses, and Company PAN to authorize tour booking broadcasts
+            Review GSTIN, trade license, and PAN so the firm can post cars and tours.
           </p>
         </div>
 

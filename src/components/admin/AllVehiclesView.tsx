@@ -45,10 +45,10 @@ export const AllVehiclesView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <Car className="w-6 h-6 text-[#F15A24]" />
-            <span>Carpool Fleet & Vehicles</span>
+            <span>Partner cars (My Cars)</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Registered vehicle models, license plates, seating capacity, and RC verification records.
+            Cars saved on partner profiles. Full-car hire only — customers contact via Call / WhatsApp.
           </p>
         </div>
 

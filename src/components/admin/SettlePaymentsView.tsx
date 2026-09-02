@@ -55,10 +55,10 @@ export const SettlePaymentsView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <CreditCard className="w-6 h-6 text-[#F15A24]" />
-            <span>Driver Payouts & Settlement Queue</span>
+            <span>Partner settlements</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Process direct UPI & Bank settlements for completed passenger carpool trips.
+            Demo settlements for posting-plan refunds or partner payouts. Customers never pay in-app.
           </p>
         </div>
 
@@ -125,7 +125,7 @@ export const SettlePaymentsView: React.FC = () => {
             Platform Take Rate
           </span>
           <p className="text-2xl font-extrabold text-[#1C1C1C]">0% Cut</p>
-          <p className="text-[11px] text-[#6B6B6B]">Drivers keep 100% of seat fares</p>
+          <p className="text-[11px] text-[#6B6B6B]">Customers pay partners offline</p>
         </div>
       </div>
 
@@ -134,7 +134,7 @@ export const SettlePaymentsView: React.FC = () => {
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
-              <th className="py-3 px-4">Driver Partner</th>
+              <th className="py-3 px-4">Partner</th>
               <th className="py-3 px-4">Payout Destination</th>
               <th className="py-3 px-4">Trips</th>
               <th className="py-3 px-4">Gross Fare</th>

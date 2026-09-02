@@ -22,6 +22,8 @@ import {
   AgencyActiveSubscription,
   AgencyTripPost,
   AgencyTripStatus,
+  CarListing,
+  Inquiry,
 } from '../types';
 import { INITIAL_DRIVERS } from '../data/mockDrivers';
 import { INITIAL_RIDES } from '../data/mockRides';
@@ -38,6 +40,29 @@ import {
   INITIAL_AGENCY_SUBSCRIPTIONS,
   INITIAL_AGENCY_TRIPS,
 } from '../data/mockAgencies';
+import { INITIAL_CAR_LISTINGS, INITIAL_INQUIRIES } from '../data/mockCarListings';
+
+const DEMO_VERSION = 'partner-v7';
+const VERSION_KEY = 'ridebhai_demo_version';
+
+function wipeRideBhaiStorage() {
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('ridebhai_'))
+      .forEach((k) => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
+try {
+  if (localStorage.getItem(VERSION_KEY) !== DEMO_VERSION) {
+    wipeRideBhaiStorage();
+    localStorage.setItem(VERSION_KEY, DEMO_VERSION);
+  }
+} catch {
+  /* ignore */
+}
 
 const STORAGE_KEYS = {
   ROLE: 'ridebhai_role',
@@ -60,6 +85,8 @@ const STORAGE_KEYS = {
   AGENCY_PACKAGES: 'ridebhai_agency_packages_v1',
   AGENCY_SUBSCRIPTIONS: 'ridebhai_agency_subscriptions_v1',
   AGENCY_TRIPS: 'ridebhai_agency_trips_v1',
+  CAR_LISTINGS: 'ridebhai_car_listings_v2',
+  INQUIRIES: 'ridebhai_inquiries_v2',
 };
 
 // Safe JSON parser from LocalStorage
@@ -106,6 +133,12 @@ export function useAppStore() {
   const [agencyPackages, setAgencyPackagesState] = useState<AgencyPackage[]>(() => loadFromStorage(STORAGE_KEYS.AGENCY_PACKAGES, INITIAL_AGENCY_PACKAGES));
   const [agencySubscriptions, setAgencySubscriptionsState] = useState<AgencyActiveSubscription[]>(() => loadFromStorage(STORAGE_KEYS.AGENCY_SUBSCRIPTIONS, INITIAL_AGENCY_SUBSCRIPTIONS));
   const [agencyTripPosts, setAgencyTripPostsState] = useState<AgencyTripPost[]>(() => loadFromStorage(STORAGE_KEYS.AGENCY_TRIPS, INITIAL_AGENCY_TRIPS));
+  const [carListings, setCarListingsState] = useState<CarListing[]>(() =>
+    loadFromStorage(STORAGE_KEYS.CAR_LISTINGS, INITIAL_CAR_LISTINGS)
+  );
+  const [inquiries, setInquiriesState] = useState<Inquiry[]>(() =>
+    loadFromStorage(STORAGE_KEYS.INQUIRIES, INITIAL_INQUIRIES)
+  );
 
   const currentDriver = useMemo(() => {
     return drivers.find((d) => d.id === 'drv-current') || drivers[0];
@@ -319,6 +352,15 @@ export function useAppStore() {
     setAgencyTripPostsState((prev) => {
       const next = updater(prev);
       saveToStorage(STORAGE_KEYS.AGENCY_TRIPS, next);
+      return next;
+    });
+    notifyListeners();
+  }, []);
+
+  const updateCarListings = useCallback((updater: (prev: CarListing[]) => CarListing[]) => {
+    setCarListingsState((prev) => {
+      const next = updater(prev);
+      saveToStorage(STORAGE_KEYS.CAR_LISTINGS, next);
       return next;
     });
     notifyListeners();
@@ -837,7 +879,12 @@ export function useAppStore() {
   );
 
   const resetDemoData = useCallback(() => {
-    localStorage.clear();
+    wipeRideBhaiStorage();
+    try {
+      localStorage.setItem(VERSION_KEY, DEMO_VERSION);
+    } catch {
+      /* ignore */
+    }
     setRoleState('admin');
     setHasOnboardedState(false);
     setDriversState(INITIAL_DRIVERS);
@@ -854,6 +901,8 @@ export function useAppStore() {
     setAgencySubscriptionsState(INITIAL_AGENCY_SUBSCRIPTIONS);
     setAgencyTripPostsState(INITIAL_AGENCY_TRIPS);
     setIsAgencyLoggedInState(false);
+    setCarListingsState(INITIAL_CAR_LISTINGS);
+    setInquiriesState(INITIAL_INQUIRIES);
     notifyListeners();
   }, []);
 
@@ -888,6 +937,9 @@ export function useAppStore() {
     agencySubscriptions,
     agencyTripPosts,
     currentAgency,
+    carListings,
+    inquiries,
+    updateCarListings,
     isDriverBoosted,
     getDriverActivePackage,
     getRankedRides,

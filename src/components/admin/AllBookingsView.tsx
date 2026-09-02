@@ -97,10 +97,10 @@ export const AllBookingsView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <CalendarCheck className="w-6 h-6 text-[#F15A24]" />
-            <span>All Ride Bookings</span>
+            <span>Legacy seat booking log</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Monitor real-time passenger reservations, pickup OTP validations, and ride completion statuses.
+            Older per-seat records kept for demo history. Live marketplace uses Call / WhatsApp inquiries.
           </p>
         </div>
 

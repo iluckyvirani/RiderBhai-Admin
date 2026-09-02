@@ -26,6 +26,50 @@ export interface Vehicle {
   pucDocument?: string;
   image?: string;
   isPrimary?: boolean;
+  currentCity?: string;
+  availability?: 'citywide' | 'route';
+  toCity?: string;
+}
+
+export interface CarListing {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  partnerPhone: string;
+  partnerWhatsapp: string;
+  partnerCity: string;
+  partnerRating: number;
+  carId: string;
+  carName: string;
+  carImage?: string;
+  plate?: string;
+  seats: number;
+  fuelType?: FuelType;
+  fullCarPrice: number;
+  availability: 'citywide' | 'route';
+  currentCity: string;
+  toCity?: string;
+  notes?: string;
+  status: 'available' | 'inactive';
+  createdAt: string;
+}
+
+export interface Inquiry {
+  id: string;
+  listingType: 'car' | 'tour';
+  listingId: string;
+  riderId: string;
+  riderName: string;
+  inquirerRole?: 'customer' | 'partner';
+  inquirerPhone?: string;
+  partnerId: string;
+  partnerName: string;
+  channel: 'call' | 'whatsapp';
+  createdAt: string;
+  title: string;
+  price: number;
+  fromCity?: string;
+  toCity?: string;
 }
 
 export interface DriverPreferences {
@@ -131,7 +175,7 @@ export interface AgencyActiveSubscription {
   postsRemaining: number;
 }
 
-export type AgencyTripStatus = 'active' | 'claimed' | 'completed' | 'cancelled';
+export type AgencyTripStatus = 'active' | 'claimed' | 'completed' | 'cancelled' | 'closed';
 
 export interface AgencyTripPost {
   id: string;
@@ -152,6 +196,7 @@ export interface AgencyTripPost {
   pickupLocation: string;
   dropLocation: string;
   requiredVehicleType: string;
+  desiredCar?: { name: string; specs: string[] };
   totalCustomerPrice: number; // e.g. ₹1000
   agencyCommission: number; // e.g. ₹200
   driverNetPayout: number; // e.g. ₹800 (totalCustomerPrice - agencyCommission)

@@ -52,10 +52,10 @@ export const AllUsersView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <Users className="w-6 h-6 text-[#F15A24]" />
-            <span>Passenger / Rider Directory</span>
+            <span>Customers</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Registered riders, verification status, travel history, and safety emergency contacts.
+            People who browse cars and tours, then Call / WhatsApp the partner. No in-app customer payment.
           </p>
         </div>
 

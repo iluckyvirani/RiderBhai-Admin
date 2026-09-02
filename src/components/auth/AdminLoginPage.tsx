@@ -77,13 +77,13 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLoginSuccess }
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF0EB] border border-[#FFD8CB] text-[#F15A24] text-[11px] font-extrabold uppercase tracking-wider mb-2">
               <Lock className="w-3.5 h-3.5" />
-              <span>Operations & KYC Console</span>
+              <span>Partners · cars · tours</span>
             </div>
             <h2 className="text-2xl font-extrabold text-[#1C1C1C] font-display">
               Admin Portal Access
             </h2>
             <p className="text-xs text-[#6B6B6B] mt-1">
-              Secure sign-in for driver verification, boost packages & dispute management.
+              Moderate listings, partner KYC, posting plans, and Call / WhatsApp inquiries.
             </p>
           </div>
         </div>

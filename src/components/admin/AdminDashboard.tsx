@@ -34,9 +34,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSwitchRole }) 
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         {[
           { id: 'overview', label: 'Analytics', icon: BarChart3 },
-          { id: 'verifications', label: 'KYC Queue', icon: ShieldCheck, badge: pendingCount },
-          { id: 'packages', label: 'Packages', icon: Package },
-          { id: 'boosts', label: 'Boosts', icon: Layers },
+          { id: 'verifications', label: 'Partner KYC', icon: ShieldCheck, badge: pendingCount },
+          { id: 'packages', label: 'Legacy boosts', icon: Package },
+          { id: 'boosts', label: 'Boost status', icon: Layers },
           { id: 'disputes', label: 'Disputes', icon: AlertCircle, badge: openDisputesCount },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -83,7 +83,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSwitchRole }) 
             className="p-2.5 bg-[#FAF6EE] border border-[#EBE5D8] rounded-xl text-left active-press hover:border-[#F15A24]"
           >
             <User className="w-4 h-4 text-[#F15A24] mb-0.5" />
-            <p className="text-xs font-bold text-[#1C1C1C]">Test Rider View</p>
+            <p className="text-xs font-bold text-[#1C1C1C]">Test customer view</p>
           </button>
 
           <button
@@ -91,7 +91,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSwitchRole }) 
             className="p-2.5 bg-[#FAF6EE] border border-[#EBE5D8] rounded-xl text-left active-press hover:border-[#2E9E5B]"
           >
             <Car className="w-4 h-4 text-[#2E9E5B] mb-0.5" />
-            <p className="text-xs font-bold text-[#1C1C1C]">Test Driver View</p>
+            <p className="text-xs font-bold text-[#1C1C1C]">Test partner view</p>
           </button>
         </div>
 

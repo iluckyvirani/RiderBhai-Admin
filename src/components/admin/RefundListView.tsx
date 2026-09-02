@@ -63,10 +63,10 @@ export const RefundListView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <RotateCcw className="w-6 h-6 text-[#F15A24]" />
-            <span>Passenger Refund Records</span>
+            <span>Refunds</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Process direct UPI & Bank chargebacks for cancelled or disputed carpool trips.
+            Partner posting-plan refunds only. There is no customer fare in the app.
           </p>
         </div>
 
@@ -158,7 +158,7 @@ export const RefundListView: React.FC = () => {
           <thead>
             <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
               <th className="py-3 px-4">Refund ID</th>
-              <th className="py-3 px-4">Passenger / Rider</th>
+              <th className="py-3 px-4">Partner / customer</th>
               <th className="py-3 px-4">Route</th>
               <th className="py-3 px-4">Refund Amount</th>
               <th className="py-3 px-4">Reason</th>

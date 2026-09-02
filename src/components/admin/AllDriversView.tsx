@@ -45,16 +45,16 @@ export const AllDriversView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <Car className="w-6 h-6 text-[#F15A24]" />
-            <span>Driver Partners Directory</span>
+            <span>All partners</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Manage all registered car owners, verification status, vehicles, bookings, and boost tiers.
+            Drivers and travel firms in one partner list — KYC, cars, and posting-plan status.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-xs font-extrabold bg-[#FFF0EB] text-[#F15A24] px-3 py-1.5 rounded-2xl border border-[#FFD8CB]">
-            Total: {drivers.length} Drivers
+            Total: {drivers.length} Partners
           </span>
         </div>
       </div>

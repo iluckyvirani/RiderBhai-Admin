@@ -13,7 +13,7 @@ export const DisputeResolutionView: React.FC = () => {
       <div className="flex items-center justify-between px-1">
         <div>
           <h3 className="text-sm font-extrabold text-[#1C1C1C]">Disputes & Support</h3>
-          <p className="text-xs text-[#6B6B6B]">Passenger refund & cancellation tickets</p>
+          <p className="text-xs text-[#6B6B6B]">Support tickets between customers and partners</p>
         </div>
         <span className="text-xs font-extrabold text-[#D64545] bg-[#FDEDED] px-2.5 py-1 rounded-full">
           {openDisputes.length} Open

@@ -94,10 +94,10 @@ export const AgencyPackageManager: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C]">
-            Travel Agency Posting Packages ({agencyPackages.length})
+            Partner posting plans ({agencyPackages.length})
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-1">
-            Define pricing, post limits, and validity for Travel Agency tour subscriptions
+            Partners must buy a plan in-app before they can post cars or tours. This is the only in-app payment.
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export const AgencyPackageManager: React.FC = () => {
           className="px-4 py-2.5 rounded-2xl bg-[#F15A24] hover:bg-[#d94815] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all active-press self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Create Agency Plan</span>
+          <span>Create posting plan</span>
         </button>
       </div>
 

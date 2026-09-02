@@ -74,8 +74,8 @@ export const PackageManager: React.FC = () => {
     <div className="space-y-4 pb-24 animate-fade-in">
       <div className="flex items-center justify-between px-1">
         <div>
-          <h3 className="text-sm font-extrabold text-[#1C1C1C]">Package Management (CRUD)</h3>
-          <p className="text-xs text-[#6B6B6B]">Configure driver boost plans & pricing</p>
+          <h3 className="text-sm font-extrabold text-[#1C1C1C]">Legacy boost plans</h3>
+          <p className="text-xs text-[#6B6B6B]">Old driver boost SKUs. Live posting plans are under Partner posting plans.</p>
         </div>
         <button
           onClick={startCreate}

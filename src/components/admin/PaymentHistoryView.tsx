@@ -60,10 +60,10 @@ export const PaymentHistoryView: React.FC = () => {
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C] flex items-center gap-2 font-display">
             <FileText className="w-6 h-6 text-[#F15A24]" />
-            <span>All Payment Transactions</span>
+            <span>Partner plan payments</span>
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-0.5">
-            Complete transactional ledger for seat bookings, instant UPI charges, and boost purchases.
+            In-app payments are partner posting plans only. Customers pay partners offline after Call / WhatsApp.
           </p>
         </div>
 
@@ -80,17 +80,17 @@ export const PaymentHistoryView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#FAF6EE] p-5 rounded-3xl border border-[#EBE5D8] space-y-1">
           <span className="text-[11px] font-extrabold text-[#6B6B6B] uppercase tracking-wider">
-            Total Transaction Volume
+            Plan payment volume
           </span>
           <p className="text-2xl font-extrabold text-[#1C1C1C]">
             ₹{totalVolume.toLocaleString('en-IN')}
           </p>
-          <p className="text-[11px] text-[#00A86B] font-bold">100% Processed via Escrow Gateway</p>
+          <p className="text-[11px] text-[#00A86B] font-bold">Partner posting plans only</p>
         </div>
 
         <div className="bg-[#FAF6EE] p-5 rounded-3xl border border-[#EBE5D8] space-y-1">
           <span className="text-[11px] font-extrabold text-[#6B6B6B] uppercase tracking-wider">
-            Successful Bookings
+            Successful plan buys
           </span>
           <p className="text-2xl font-extrabold text-[#1C1C1C]">
             {payments.filter((p) => p.status === 'success').length}
@@ -100,12 +100,12 @@ export const PaymentHistoryView: React.FC = () => {
 
         <div className="bg-[#FAF6EE] p-5 rounded-3xl border border-[#EBE5D8] space-y-1">
           <span className="text-[11px] font-extrabold text-[#6B6B6B] uppercase tracking-wider">
-            Average Seat Fare
+            Average plan price
           </span>
           <p className="text-2xl font-extrabold text-[#1C1C1C]">
             ₹{payments.length ? Math.round(totalVolume / payments.length) : 0}
           </p>
-          <p className="text-[11px] text-[#6B6B6B]">Per passenger intercity trip</p>
+          <p className="text-[11px] text-[#6B6B6B]">Per posting plan purchase</p>
         </div>
       </div>
 
@@ -152,9 +152,9 @@ export const PaymentHistoryView: React.FC = () => {
           <thead>
             <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
               <th className="py-3 px-4">Transaction ID</th>
-              <th className="py-3 px-4">Route & Seats</th>
-              <th className="py-3 px-4">Passenger / Rider</th>
-              <th className="py-3 px-4">Driver Partner</th>
+              <th className="py-3 px-4">Plan / listing</th>
+              <th className="py-3 px-4">Customer</th>
+              <th className="py-3 px-4">Partner</th>
               <th className="py-3 px-4">Amount</th>
               <th className="py-3 px-4">Method</th>
               <th className="py-3 px-4 text-right">Date & Time</th>
@@ -172,7 +172,7 @@ export const PaymentHistoryView: React.FC = () => {
                 <td className="py-3.5 px-4">
                   <div>
                     <p className="font-extrabold text-xs text-[#1C1C1C]">{p.route}</p>
-                    <span className="text-[10px] text-[#6B6B6B]">{p.seats} Seat(s) Booked</span>
+                    <span className="text-[10px] text-[#6B6B6B]">Posting plan / demo txn</span>
                   </div>
                 </td>
 

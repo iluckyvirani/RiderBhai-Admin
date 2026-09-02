@@ -6,27 +6,27 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
   CartesianGrid,
 } from 'recharts';
-import { TrendingUp, Users, Car, Sparkles, DollarSign, Award } from 'lucide-react';
+import { TrendingUp, Users, Car, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 export const AdminAnalyticsView: React.FC = () => {
-  const { rides, bookings, drivers, driverPackages, packages } = useAppStore();
+  const { drivers, carListings, inquiries, agencyTripPosts, agencySubscriptions, agencyPackages } = useAppStore();
 
-  const totalBookingsCount = bookings.length + 142;
-  const totalRidesCount = rides.length + 86;
-  const activeBoostsCount = driverPackages.filter((dp) => dp.expiresAt > Date.now()).length;
-  const estimatedRevenue = (bookings.reduce((sum, b) => sum + b.totalPrice, 0) + 78500);
+  const liveCars = carListings.filter((c) => c.status === 'available').length;
+  const liveTours = agencyTripPosts.filter((t) => t.status === 'active').length;
+  const planRevenue = agencySubscriptions.reduce((sum, sub) => {
+    const pkg = agencyPackages.find((p) => p.id === sub.packageId);
+    return sum + (pkg?.price || 0);
+  }, 0);
 
   const monthlyData = [
-    { month: 'Apr', rides: 42, revenue: 16800 },
-    { month: 'May', rides: 68, revenue: 27200 },
-    { month: 'Jun', rides: 95, revenue: 39900 },
-    { month: 'Jul', rides: 130, revenue: 54600 },
-    { month: 'Aug', rides: 184, revenue: 78500 },
+    { month: 'Apr', rides: 28, revenue: 8997 },
+    { month: 'May', rides: 41, revenue: 11996 },
+    { month: 'Jun', rides: 55, revenue: 16494 },
+    { month: 'Jul', rides: 72, revenue: 20993 },
+    { month: 'Aug', rides: 88, revenue: 26991 },
   ];
 
   const topCorridors = [
@@ -39,20 +39,20 @@ export const AdminAnalyticsView: React.FC = () => {
   return (
     <div className="space-y-4 pb-24 animate-fade-in">
       <div className="px-1">
-        <h3 className="text-sm font-extrabold text-[#1C1C1C]">Performance Analytics</h3>
-        <p className="text-xs text-[#6B6B6B]">Platform growth, revenue & route insights</p>
+        <h3 className="text-sm font-extrabold text-[#1C1C1C]">Marketplace analytics</h3>
+        <p className="text-xs text-[#6B6B6B]">Listings, inquiries, and partner posting-plan revenue</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-2.5">
         <div className="bg-white p-3.5 rounded-3xl border border-[#EBE5D8] shadow-card">
           <div className="flex items-center justify-between text-[#6B6B6B] mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Est. GMV</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider">Plan revenue</span>
             <div className="w-6 h-6 rounded-lg bg-[#EBF7F0] text-[#2E9E5B] flex items-center justify-center text-xs font-bold">
               ₹
             </div>
           </div>
-          <p className="text-xl font-extrabold text-[#1C1C1C]">₹{estimatedRevenue.toLocaleString()}</p>
+          <p className="text-xl font-extrabold text-[#1C1C1C]">₹{planRevenue.toLocaleString()}</p>
           <span className="text-[10px] text-[#2E9E5B] font-bold flex items-center gap-0.5 mt-0.5">
             <TrendingUp className="w-3 h-3" /> +24% vs last mo
           </span>
@@ -60,33 +60,35 @@ export const AdminAnalyticsView: React.FC = () => {
 
         <div className="bg-white p-3.5 rounded-3xl border border-[#EBE5D8] shadow-card">
           <div className="flex items-center justify-between text-[#6B6B6B] mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Boost Revenue</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider">Partners</span>
             <div className="w-6 h-6 rounded-lg bg-[#FFF0EB] text-[#F15A24] flex items-center justify-center">
               <Sparkles className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-xl font-extrabold text-[#F15A24]">₹{activeBoostsCount * 299 + 1890}</p>
+          <p className="text-xl font-extrabold text-[#F15A24]">{drivers.length}</p>
           <span className="text-[10px] text-[#F15A24] font-bold">
-            {activeBoostsCount} Drivers Active
+            {agencySubscriptions.length} active posting plans
           </span>
         </div>
 
         <div className="bg-white p-3.5 rounded-3xl border border-[#EBE5D8] shadow-card">
           <div className="flex items-center justify-between text-[#6B6B6B] mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Total Rides</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider">Live listings</span>
             <Car className="w-4 h-4 text-[#F15A24]" />
           </div>
-          <p className="text-xl font-extrabold text-[#1C1C1C]">{totalRidesCount}</p>
-          <span className="text-[10px] text-[#6B6B6B]">Across 8 Highways</span>
+          <p className="text-xl font-extrabold text-[#1C1C1C]">{liveCars + liveTours}</p>
+          <span className="text-[10px] text-[#6B6B6B]">
+            {liveCars} cars · {liveTours} tours
+          </span>
         </div>
 
         <div className="bg-white p-3.5 rounded-3xl border border-[#EBE5D8] shadow-card">
           <div className="flex items-center justify-between text-[#6B6B6B] mb-1">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider">Booked Seats</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider">Inquiries</span>
             <Users className="w-4 h-4 text-[#2E9E5B]" />
           </div>
-          <p className="text-xl font-extrabold text-[#1C1C1C]">{totalBookingsCount}</p>
-          <span className="text-[10px] text-[#2E9E5B] font-bold">98.4% Completion</span>
+          <p className="text-xl font-extrabold text-[#1C1C1C]">{inquiries.length}</p>
+          <span className="text-[10px] text-[#2E9E5B] font-bold">Call / WhatsApp only</span>
         </div>
       </div>
 
@@ -94,7 +96,7 @@ export const AdminAnalyticsView: React.FC = () => {
       <div className="bg-white rounded-3xl p-4 border border-[#EBE5D8] shadow-card space-y-2">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-extrabold text-[#1C1C1C] uppercase tracking-wider">
-            Monthly Ride Bookings
+            Monthly inquiries
           </h4>
           <span className="text-[10px] text-[#F15A24] font-bold">+41% MoM</span>
         </div>

@@ -1,31 +1,22 @@
 import React, { useState } from 'react';
 import {
   MapPin,
-  Calendar,
-  Users,
-  Car,
-  DollarSign,
   Search,
   Building,
-  ShieldCheck,
-  CheckCircle2,
   Trash2,
-  AlertTriangle,
-  Phone,
-  MessageCircle
 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { AgencyTripPost } from '../../types';
 
 export const AgencyTourPostsManager: React.FC = () => {
   const { agencyTripPosts, updateAgencyTripPosts, updateAgencyTripStatus } = useAppStore();
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'claimed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
 
   const filteredPosts = agencyTripPosts.filter((post) => {
     if (statusFilter === 'active' && post.status !== 'active') return false;
-    if (statusFilter === 'claimed' && post.status !== 'claimed' && post.status !== 'completed') return false;
+    if (statusFilter === 'closed' && post.status !== 'closed' && post.status !== 'claimed' && post.status !== 'completed')
+      return false;
 
     if (search) {
       const q = search.toLowerCase();
@@ -51,10 +42,10 @@ export const AgencyTourPostsManager: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-[#1C1C1C]">
-            Agency Tour Bookings Marketplace ({agencyTripPosts.length})
+            Tour packages ({agencyTripPosts.length})
           </h2>
           <p className="text-xs text-[#6B6B6B] mt-1">
-            Monitor and moderate pre-booked intercity trips posted by verified travel agencies
+            Partner tour posts. Customers Call / WhatsApp — no in-app pay. Close a tour after the partner confirms offline.
           </p>
         </div>
 
@@ -74,15 +65,20 @@ export const AgencyTourPostsManager: React.FC = () => {
               statusFilter === 'active' ? 'bg-emerald-600 text-white shadow-xs' : 'text-[#6B6B6B]'
             }`}
           >
-            Active Open ({agencyTripPosts.filter((p) => p.status === 'active').length})
+            Live ({agencyTripPosts.filter((p) => p.status === 'active').length})
           </button>
           <button
-            onClick={() => setStatusFilter('claimed')}
+            onClick={() => setStatusFilter('closed')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              statusFilter === 'claimed' ? 'bg-[#F15A24] text-white shadow-xs' : 'text-[#6B6B6B]'
+              statusFilter === 'closed' ? 'bg-[#F15A24] text-white shadow-xs' : 'text-[#6B6B6B]'
             }`}
           >
-            Claimed by Driver ({agencyTripPosts.filter((p) => p.status === 'claimed').length})
+            Closed (
+            {
+              agencyTripPosts.filter((p) => p.status === 'closed' || p.status === 'claimed' || p.status === 'completed')
+                .length
+            }
+            )
           </button>
         </div>
       </div>
@@ -104,7 +100,7 @@ export const AgencyTourPostsManager: React.FC = () => {
         {filteredPosts.length === 0 ? (
           <div className="p-12 text-center bg-[#FAF6EE] rounded-3xl border border-[#EBE5D8]">
             <Building className="w-10 h-10 text-[#C4BCAB] mx-auto mb-2" />
-            <p className="text-sm font-bold text-[#1C1C1C]">No tour leads found</p>
+            <p className="text-sm font-bold text-[#1C1C1C]">No tour packages found</p>
             <p className="text-xs text-[#6B6B6B] mt-1">Try clearing search or filter query.</p>
           </div>
         ) : (
@@ -139,7 +135,14 @@ export const AgencyTourPostsManager: React.FC = () => {
                   >
                     {post.status}
                   </span>
-
+                  {post.status === 'active' && (
+                    <button
+                      onClick={() => updateAgencyTripStatus(post.id, 'closed')}
+                      className="px-2 py-1 rounded-lg bg-[#1C1C1C] text-white text-[10px] font-extrabold"
+                    >
+                      Close & hide
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(post.id)}
                     className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-600 transition-colors"
@@ -161,7 +164,13 @@ export const AgencyTourPostsManager: React.FC = () => {
                   </div>
                   <p className="text-xs text-[#6B6B6B] mt-0.5">
                     {post.passengers} Pax • {post.duration} • Vehicle: <strong>{post.requiredVehicleType}</strong>
+                    {post.desiredCar?.name ? ` • Desired: ${post.desiredCar.name}` : ''}
                   </p>
+                  {post.desiredCar?.specs?.length ? (
+                    <p className="text-[10px] text-[#6B6B6B] mt-0.5">
+                      Specs: {post.desiredCar.specs.filter(Boolean).join(' · ')}
+                    </p>
+                  ) : null}
                 </div>
 
                 {/* Financial breakdown */}
@@ -171,11 +180,11 @@ export const AgencyTourPostsManager: React.FC = () => {
                     <strong className="text-xs text-[#1C1C1C]">₹{post.totalCustomerPrice}</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#6B6B6B] block">Agency Cut</span>
+                    <span className="text-[10px] text-[#6B6B6B] block">Partner cut</span>
                     <strong className="text-xs text-[#F15A24]">₹{post.agencyCommission}</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#00A86B] font-bold block">Driver Net</span>
+                    <span className="text-[10px] text-[#00A86B] font-bold block">Net to car</span>
                     <strong className="text-sm font-black text-[#00A86B]">₹{post.driverNetPayout}</strong>
                   </div>
                 </div>

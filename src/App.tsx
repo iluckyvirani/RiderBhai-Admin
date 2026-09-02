@@ -33,6 +33,8 @@ import { AllBookingsView } from './components/admin/AllBookingsView';
 import { AllDriversView } from './components/admin/AllDriversView';
 import { AllUsersView } from './components/admin/AllUsersView';
 import { AllVehiclesView } from './components/admin/AllVehiclesView';
+import { AllCarListingsView } from './components/admin/AllCarListingsView';
+import { AllInquiriesView } from './components/admin/AllInquiriesView';
 import { DriverVerificationQueue } from './components/admin/DriverVerificationQueue';
 import { PackageManager } from './components/admin/PackageManager';
 import { DriverBoostStatusList } from './components/admin/DriverBoostStatusList';
@@ -50,6 +52,8 @@ import { AgencyPackageManager } from './components/admin/AgencyPackageManager';
 export type AdminTab =
   | 'dashboard'
   | 'all-bookings'
+  | 'all-inquiries'
+  | 'all-cars'
   | 'all-drivers'
   | 'all-users'
   | 'all-vehicles'
@@ -82,7 +86,8 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { drivers, bookings, disputes, agencies, agencyTripPosts, resetDemoData } = useAppStore();
+  const { drivers, bookings, disputes, agencies, agencyTripPosts, carListings, inquiries, resetDemoData } =
+    useAppStore();
 
   const handleLoginSuccess = (user: AdminUser) => {
     setAdminUser(user);
@@ -105,69 +110,53 @@ export function App() {
 
   const menuSections = [
     {
-      title: 'Core Platform',
+      title: 'Marketplace',
       items: [
         { id: 'dashboard' as AdminTab, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'all-bookings' as AdminTab, label: 'All Bookings', icon: CalendarCheck, badge: bookings.length },
-        { id: 'all-drivers' as AdminTab, label: 'All Drivers', icon: Car, badge: drivers.length },
-        { id: 'all-users' as AdminTab, label: 'All Users', icon: Users },
-        { id: 'all-vehicles' as AdminTab, label: 'All Vehicles', icon: Sparkles },
+        { id: 'all-inquiries' as AdminTab, label: 'Inquiries (Call / WA)', icon: CalendarCheck, badge: inquiries.length },
+        { id: 'all-cars' as AdminTab, label: 'Car listings', icon: Car, badge: carListings.length },
+        { id: 'agency-tour-posts' as AdminTab, label: 'Tour packages', icon: MapPin, badge: agencyTripPosts.length },
+        { id: 'all-users' as AdminTab, label: 'Customers', icon: Users },
       ],
     },
     {
-      title: 'Travel Agency Operations',
+      title: 'Partners',
       items: [
-        {
-          id: 'agency-kyc-queue' as AdminTab,
-          label: 'Agency KYC Queue',
-          icon: ShieldCheck,
-          badge: pendingAgencyKycCount,
-          badgeColor: 'bg-[#F15A24] text-white',
-        },
-        { id: 'all-agencies' as AdminTab, label: 'All Travel Agencies', icon: Building, badge: agencies.length },
-        { id: 'agency-tour-posts' as AdminTab, label: 'Tour Booking Leads', icon: MapPin, badge: agencyTripPosts.length },
-        { id: 'agency-packages' as AdminTab, label: 'Agency Posting Plans', icon: PackageCheck },
-      ],
-    },
-    {
-      title: 'Driver KYC & Boost',
-      items: [
+        { id: 'all-drivers' as AdminTab, label: 'All partners', icon: Car, badge: drivers.length },
+        { id: 'all-agencies' as AdminTab, label: 'Partner firms', icon: Building, badge: agencies.length },
+        { id: 'all-vehicles' as AdminTab, label: 'Partner cars', icon: Sparkles },
         {
           id: 'kyc-queue' as AdminTab,
-          label: 'Driver KYC Queue',
+          label: 'Partner KYC',
           icon: ShieldCheck,
           badge: pendingDriverKycCount,
           badgeColor: 'bg-[#F15A24] text-white',
         },
-        { id: 'boost-packages' as AdminTab, label: 'Driver Boost Packages', icon: PackageCheck },
+        {
+          id: 'agency-kyc-queue' as AdminTab,
+          label: 'Firm KYC',
+          icon: ShieldCheck,
+          badge: pendingAgencyKycCount,
+          badgeColor: 'bg-[#F15A24] text-white',
+        },
+        { id: 'agency-packages' as AdminTab, label: 'Posting plans', icon: PackageCheck },
       ],
     },
     {
-      title: 'Finance & Payments',
+      title: 'Finance (partner plans only)',
       items: [
-        {
-          id: 'settle-payments' as AdminTab,
-          label: 'Settle Up Payments',
-          icon: CreditCard,
-          badge: '3 Pending',
-          badgeColor: 'bg-amber-100 text-amber-800',
-        },
-        { id: 'payment-history' as AdminTab, label: 'All Payment History', icon: FileText },
-        {
-          id: 'refund-list' as AdminTab,
-          label: 'Refund List',
-          icon: RotateCcw,
-          badge: '2 Open',
-          badgeColor: 'bg-rose-100 text-rose-700',
-        },
+        { id: 'payment-history' as AdminTab, label: 'Plan payments', icon: FileText },
+        { id: 'settle-payments' as AdminTab, label: 'Settlements', icon: CreditCard },
+        { id: 'refund-list' as AdminTab, label: 'Refunds', icon: RotateCcw },
+        { id: 'all-bookings' as AdminTab, label: 'Legacy seat log', icon: CalendarCheck, badge: bookings.length },
       ],
     },
     {
-      title: 'Customer Support',
+      title: 'Support',
       items: [
         {
           id: 'support-tickets' as AdminTab,
-          label: 'All Tickets',
+          label: 'Tickets',
           icon: LifeBuoy,
           badge: openDisputesCount || 2,
           badgeColor: 'bg-red-500 text-white',
@@ -181,33 +170,37 @@ export function App() {
       case 'dashboard':
         return 'Platform Analytics & KPIs';
       case 'all-bookings':
-        return 'All Ride Bookings';
+        return 'Legacy seat booking log';
+      case 'all-inquiries':
+        return 'Call & WhatsApp inquiries';
+      case 'all-cars':
+        return 'Full-car listings (all India)';
       case 'all-drivers':
-        return 'All Driver Partners';
+        return 'All partners';
       case 'all-users':
-        return 'All Passenger Riders';
+        return 'Customers';
       case 'all-vehicles':
-        return 'Registered Vehicle Fleet';
+        return 'Partner cars (My Cars)';
       case 'agency-kyc-queue':
-        return 'Travel Agency KYC Verification Queue';
+        return 'Firm KYC queue';
       case 'all-agencies':
-        return 'Partner Travel Agencies';
+        return 'Partner firms';
       case 'agency-tour-posts':
-        return 'Agency Tour Booking Leads Marketplace';
+        return 'Tour packages';
       case 'agency-packages':
-        return 'Travel Agency Posting Packages';
+        return 'Partner posting plans (in-app pay)';
       case 'kyc-queue':
-        return 'Driver KYC Verification Queue';
+        return 'Partner KYC queue';
       case 'boost-packages':
-        return 'Driver Boost Packages & Active Statuses';
+        return 'Legacy boost packages';
       case 'settle-payments':
-        return 'Payment Settlement & Driver Payouts';
+        return 'Partner settlements';
       case 'payment-history':
-        return 'Platform Transaction Log';
+        return 'Partner plan payments';
       case 'support-tickets':
-        return 'Support Tickets & Grievances';
+        return 'Support tickets';
       case 'refund-list':
-        return 'Passenger Refund Queue';
+        return 'Refunds';
       default:
         return 'Operations Dashboard';
     }
@@ -306,7 +299,7 @@ export function App() {
                 {getPageTitle()}
               </h1>
               <p className="text-[11px] text-[#6B6B6B] hidden sm:block truncate">
-                Ride Bhai Regional Control & Compliance Desk
+                Full-car hires & tours · customers Call / WhatsApp · partners pay for posting plans
               </p>
             </div>
           </div>
@@ -359,6 +352,8 @@ export function App() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6">
           <div className="bg-white rounded-3xl p-5 sm:p-8 border border-[#EBE5D8] shadow-card">
             {activeTab === 'dashboard' && <AdminDashboard onSwitchRole={() => {}} />}
+            {activeTab === 'all-inquiries' && <AllInquiriesView />}
+            {activeTab === 'all-cars' && <AllCarListingsView />}
             {activeTab === 'all-bookings' && <AllBookingsView />}
             {activeTab === 'all-drivers' && <AllDriversView />}
             {activeTab === 'all-users' && <AllUsersView />}
@@ -383,7 +378,7 @@ export function App() {
           </div>
 
           <footer className="bg-white rounded-2xl border border-[#EBE5D8] py-4 text-center text-xs text-[#6B6B6B]">
-            <span>Ride Bhai Operations Console v2.0 • Authorized Personnel Only</span>
+            <span>Ride Bhai Admin · Partners, full-car listings & tour packages</span>
           </footer>
         </main>
       </div>
