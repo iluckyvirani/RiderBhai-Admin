@@ -54,3 +54,22 @@
 .active-press:active {
   transform: scale(0.97);
 }
+
+.h-13 {
+  height: 3.25rem;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.skeleton-bone {
+  background: linear-gradient(90deg, #ebe5d8 0%, #f7f3ea 45%, #ebe5d8 90%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.25s ease-in-out infinite;
+}

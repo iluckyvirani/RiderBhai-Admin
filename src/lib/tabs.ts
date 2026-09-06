@@ -1,0 +1,13 @@
+export type AdminTab =
+  | 'dashboard'
+  | 'kyc'
+  | 'users-verified'
+  | 'drivers-verified'
+  | 'cars-verified'
+  | 'live-cars'
+  | 'agency-tour-posts'
+  | 'deals'
+  | 'chats'
+  | 'plans'
+  | 'payments'
+  | 'settings';

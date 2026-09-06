@@ -8,6 +8,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview --port 5174"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

@@ -42,6 +42,10 @@ export interface CarListing {
   carId: string;
   carName: string;
   carImage?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  color?: string;
   plate?: string;
   seats: number;
   fuelType?: FuelType;
@@ -50,6 +54,14 @@ export interface CarListing {
   currentCity: string;
   toCity?: string;
   notes?: string;
+  postedDate?: string;
+  postedTime?: string;
+  bookingDate?: string;
+  bookingTime?: string;
+  availableTillDate?: string;
+  availableTillTime?: string;
+  driverName?: string;
+  driverExperienceYears?: number;
   status: 'available' | 'inactive';
   createdAt: string;
 }
