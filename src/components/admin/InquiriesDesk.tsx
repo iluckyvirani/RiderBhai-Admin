@@ -5,6 +5,7 @@ import { mapDeal, type Deal } from '../../lib/deals';
 import { AdminPageSkeleton, ButtonSpinner } from '../common/AdminLoading';
 import { EmptyState } from '../common/EmptyState';
 import { chatClock, withDaySeparators } from '../../lib/chatTime';
+import { DealRatings } from './DealRatings';
 
 type ChatMsg = { id: string; sender_name: string; body: string; created_at: string };
 
@@ -311,6 +312,7 @@ export const InquiriesDesk: React.FC = () => {
                 </p>
                 <p className="text-sm font-extrabold text-[#F15A24] mt-1">{money(selected.price)}</p>
               </div>
+              <DealRatings deal={selected} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="text-[11px] font-extrabold uppercase text-[#8A8478]">

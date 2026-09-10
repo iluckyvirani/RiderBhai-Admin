@@ -28,6 +28,7 @@ import { EmptyState } from '../common/EmptyState';
 import { DocumentPreview } from '../common/DocumentPreview';
 import { DriverDetailsView } from './DriverDetailsView';
 import { VehicleDetailsView } from './VehicleDetailsView';
+import { DealRatings } from './DealRatings';
 import type { AgencyTripPost, CarListing } from '../../types';
 
 type ProfileUser = {
@@ -94,6 +95,12 @@ function money(n: number) {
 function when(value?: string) {
   if (!value) return '—';
   return new Date(value).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function stamp(date?: string, time?: string) {
+  if (!date && !time) return '—';
+  const pretty = date ? date.split('-').reverse().join('/') : '';
+  return [pretty, time].filter(Boolean).join(' · ');
 }
 
 function Empty({ text }: { text: string }) {
@@ -457,11 +464,27 @@ export function UserProfileModal({
                         <p className="text-[10px] font-extrabold uppercase text-[#8A8478]">Fuel</p>
                         <p className="text-xs font-extrabold mt-0.5">{selectedCarPost.fuelType || '—'}</p>
                       </div>
+                      <div className="rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] p-2.5">
+                        <p className="text-[10px] font-extrabold uppercase text-[#8A8478]">Available from</p>
+                        <p className="text-xs font-extrabold mt-0.5">
+                          {stamp(selectedCarPost.bookingDate, selectedCarPost.bookingTime)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] p-2.5">
+                        <p className="text-[10px] font-extrabold uppercase text-[#8A8478]">Available to</p>
+                        <p className="text-xs font-extrabold mt-0.5">
+                          {stamp(selectedCarPost.availableTillDate, selectedCarPost.availableTillTime)}
+                        </p>
+                      </div>
                     </div>
                     {selectedCarPost.notes && (
                       <p className="text-[11px] text-[#6B6B6B]">{selectedCarPost.notes}</p>
                     )}
-                    <p className="text-[11px] text-[#8A8478]">Posted {when(selectedCarPost.createdAt)}</p>
+                    <p className="text-[11px] text-[#8A8478]">
+                      Posted {stamp(selectedCarPost.postedDate, selectedCarPost.postedTime) !== '—'
+                        ? stamp(selectedCarPost.postedDate, selectedCarPost.postedTime)
+                        : when(selectedCarPost.createdAt)}
+                    </p>
                   </div>
                 </div>
               ) : cars.length === 0 ? (
@@ -523,6 +546,7 @@ export function UserProfileModal({
                     Buyer {deal.buyerName} → Seller {deal.sellerName}
                   </p>
                   <p className="text-xs font-extrabold">{money(deal.price)}</p>
+                  <DealRatings deal={deal} />
                 </div>
               ))}
             </div>

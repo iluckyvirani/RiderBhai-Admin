@@ -145,8 +145,8 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
               }
             />
             <Detail label="Posted" value={stamp(selected.postedDate, selected.postedTime)} />
-            <Detail label="Booking" value={stamp(selected.bookingDate, selected.bookingTime)} />
-            <Detail label="Available till" value={stamp(selected.availableTillDate, selected.availableTillTime)} />
+            <Detail label="Available from" value={stamp(selected.bookingDate, selected.bookingTime)} />
+            <Detail label="Available to" value={stamp(selected.availableTillDate, selected.availableTillTime)} />
             <Detail label="Created" value={when(selected.createdAt)} />
           </div>
           {selected.notes && (
@@ -240,6 +240,7 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
                 <th className="py-3 px-4">Route</th>
                 <th className="py-3 px-4">Partner</th>
                 <th className="py-3 px-4">Price</th>
+                <th className="py-3 px-4">Available</th>
                 <th className="py-3 px-4">Posted</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -247,6 +248,7 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
             <tbody className="divide-y divide-[#F2ECE1]">
               {filtered.map((c) => {
                 const live = c.status === 'available';
+                const posted = stamp(c.postedDate, c.postedTime);
                 return (
                   <tr key={c.id} className="hover:bg-[#FFFDF9]">
                     <td className="py-3.5 px-4">
@@ -274,8 +276,15 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
                     </td>
                     <td className="py-3.5 px-4 font-bold text-[#1C1C1C]">{c.partnerName || '—'}</td>
                     <td className="py-3.5 px-4 font-extrabold text-[#F15A24] whitespace-nowrap">{money(c.fullCarPrice)}</td>
+                    <td className="py-3.5 px-4 text-[#6B6B6B] whitespace-nowrap text-[11px]">
+                      {stamp(c.bookingDate, c.bookingTime)} → {stamp(c.availableTillDate, c.availableTillTime)}
+                    </td>
                     <td className="py-3.5 px-4 text-[#6B6B6B] whitespace-nowrap">
-                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '—'}
+                      {posted !== '—'
+                        ? posted
+                        : c.createdAt
+                          ? new Date(c.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+                          : '—'}
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center justify-end gap-1.5">

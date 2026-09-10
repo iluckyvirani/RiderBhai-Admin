@@ -17,6 +17,8 @@ export type Deal = {
   threadId?: string;
   adminNote?: string;
   createdAt: string;
+  buyerRating?: number;
+  sellerRating?: number;
 };
 
 export function mapDeal(row: any): Deal {
@@ -39,5 +41,7 @@ export function mapDeal(row: any): Deal {
     threadId: row.thread_id || undefined,
     adminNote: row.admin_note || undefined,
     createdAt: row.created_at || new Date().toISOString(),
+    buyerRating: row.buyer_rating != null ? Number(row.buyer_rating) : undefined,
+    sellerRating: row.seller_rating != null ? Number(row.seller_rating) : undefined,
   };
 }

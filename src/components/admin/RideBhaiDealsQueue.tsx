@@ -4,6 +4,7 @@ import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { mapDeal, type Deal } from '../../lib/deals';
 import { AdminPageSkeleton } from '../common/AdminLoading';
+import { DealRatings } from './DealRatings';
 
 export const RideBhaiDealsQueue: React.FC = () => {
   const [filter, setFilter] = useState<'pending' | 'success' | 'cancelled' | 'all'>('pending');
@@ -96,6 +97,7 @@ export const RideBhaiDealsQueue: React.FC = () => {
           <p className="text-[11px] text-[#6B6B6B]">
             Buyer {deal.buyerName} → Seller {deal.sellerName}
           </p>
+          <DealRatings deal={deal} />
           {deal.status === 'pending' && (
             <div className="grid grid-cols-2 gap-2">
               <button

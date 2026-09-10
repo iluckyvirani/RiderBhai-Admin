@@ -86,6 +86,10 @@ export const DriverDetailsView: React.FC<{
             <p className="text-[10px] font-extrabold uppercase text-[#8A8478]">Account owner</p>
             <p className="text-xs font-extrabold mt-0.5">{driver.ownerName || '—'}</p>
           </div>
+          <div className="rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] p-2.5">
+            <p className="text-[10px] font-extrabold uppercase text-[#8A8478]">DL number</p>
+            <p className="text-xs font-extrabold mt-0.5 tracking-wide">{driver.dlNumber || '—'}</p>
+          </div>
         </div>
 
         {driver.experienceNote && (
@@ -97,6 +101,7 @@ export const DriverDetailsView: React.FC<{
         </span>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <DocumentPreview label="Driving licence" src={driver.dlDoc} />
           <DocumentPreview label="Driver Aadhaar" src={driver.aadhaarDoc} />
           <DocumentPreview label="Driver selfie" src={driver.selfieDoc} />
         </div>

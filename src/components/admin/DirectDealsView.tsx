@@ -4,6 +4,7 @@ import { api, getToken } from '../../lib/api';
 import { mapDeal, type Deal } from '../../lib/deals';
 import { AdminPageSkeleton } from '../common/AdminLoading';
 import { EmptyState } from '../common/EmptyState';
+import { DealRatings } from './DealRatings';
 
 export const DirectDealsView: React.FC = () => {
   const [search, setSearch] = useState('');
@@ -84,6 +85,7 @@ export const DirectDealsView: React.FC = () => {
               {deal.toCity ? ` → ${deal.toCity}` : ''}
             </p>
             <p className="text-xs font-extrabold">₹{deal.price.toLocaleString('en-IN')}</p>
+            <DealRatings deal={deal} />
           </div>
         ))}
     </div>

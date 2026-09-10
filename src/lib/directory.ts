@@ -53,6 +53,8 @@ export type AdminDriverRow = {
   agencyName?: string;
   selfieDoc?: string;
   aadhaarDoc?: string;
+  dlNumber?: string;
+  dlDoc?: string;
   ownerName?: string;
   ownerPhone?: string;
   verificationStatus: VehicleVerification;
@@ -128,6 +130,8 @@ export function mapAdminDriver(row: any): AdminDriverRow {
     agencyName: row.agency_name || undefined,
     selfieDoc: row.selfie_doc || undefined,
     aadhaarDoc: row.aadhaar_doc || undefined,
+    dlNumber: row.dl_number || undefined,
+    dlDoc: row.dl_doc || undefined,
     ownerName: row.owner_name || undefined,
     ownerPhone: row.owner_phone || undefined,
     verificationStatus:

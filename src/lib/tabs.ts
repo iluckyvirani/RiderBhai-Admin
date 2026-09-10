@@ -4,10 +4,12 @@ export type AdminTab =
   | 'users-verified'
   | 'drivers-verified'
   | 'cars-verified'
+  | 'car-catalog'
   | 'live-cars'
   | 'agency-tour-posts'
   | 'deals'
   | 'chats'
   | 'plans'
   | 'payments'
+  | 'legal'
   | 'settings';

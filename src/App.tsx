@@ -14,9 +14,11 @@ import {
   Sparkles,
   MessageCircle,
   Settings,
+  FileText,
   Menu,
   X,
   IdCard,
+  Tags,
 } from 'lucide-react';
 import { Logo } from './components/common/Logo';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
@@ -28,9 +30,11 @@ import { AgencyTourPostsManager } from './components/admin/AgencyTourPostsManage
 import { AllUsersView } from './components/admin/AllUsersView';
 import { AllDriversView } from './components/admin/AllDriversView';
 import { AllVehiclesView } from './components/admin/AllVehiclesView';
+import { CarCatalogView } from './components/admin/CarCatalogView';
 import { KycDesk, type KycKind } from './components/admin/KycDesk';
 import { AllPaymentsView, PlansCatalogView } from './components/admin/PlansPaymentsView';
 import { AdminProfileSettings } from './components/admin/AdminProfileSettings';
+import { LegalPagesView } from './components/admin/LegalPagesView';
 import { api, getToken, setToken } from './lib/api';
 import type { AdminTab } from './lib/tabs';
 import { SessionSplash } from './components/common/AdminLoading';
@@ -106,12 +110,14 @@ export function App() {
     { id: 'users-verified', label: 'All users verified', icon: Users },
     { id: 'drivers-verified', label: 'All driver verified', icon: IdCard },
     { id: 'cars-verified', label: 'All cars verified', icon: Car },
+    { id: 'car-catalog', label: 'Car catalog', icon: Tags },
     { id: 'live-cars', label: 'Live cars', icon: Radio },
     { id: 'agency-tour-posts', label: 'All tours', icon: MapPin },
     { id: 'deals', label: 'Inquiries', icon: Phone },
     { id: 'chats', label: 'Direct chats', icon: MessageCircle },
     { id: 'plans', label: 'Plans', icon: Sparkles },
     { id: 'payments', label: 'Payment', icon: CreditCard },
+    { id: 'legal', label: 'Website', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -121,12 +127,14 @@ export function App() {
     'users-verified': 'All users verified',
     'drivers-verified': 'All driver verified',
     'cars-verified': 'All cars verified',
+    'car-catalog': 'Car catalog',
     'live-cars': 'Live cars',
     'agency-tour-posts': 'All tours',
     deals: 'Inquiries',
     chats: 'Direct chats',
     plans: 'Plans',
     payments: 'Payment',
+    legal: 'Website content',
     settings: 'Settings',
   };
 
@@ -233,12 +241,14 @@ export function App() {
               {activeTab === 'users-verified' && <AllUsersView verifiedOnly />}
               {activeTab === 'drivers-verified' && <AllDriversView verifiedOnly />}
               {activeTab === 'cars-verified' && <AllVehiclesView verifiedOnly />}
+              {activeTab === 'car-catalog' && <CarCatalogView />}
               {activeTab === 'live-cars' && <AllCarListingsView />}
               {activeTab === 'agency-tour-posts' && <AgencyTourPostsManager />}
               {activeTab === 'deals' && <InquiriesDesk />}
               {activeTab === 'chats' && <AdminChatsView />}
               {activeTab === 'plans' && <PlansCatalogView />}
               {activeTab === 'payments' && <AllPaymentsView />}
+              {activeTab === 'legal' && <LegalPagesView />}
               {activeTab === 'settings' && (
                 <AdminProfileSettings adminUser={adminUser} onUpdated={setAdminUser} />
               )}
