@@ -19,6 +19,7 @@ import {
   X,
   IdCard,
   Tags,
+  LifeBuoy,
 } from 'lucide-react';
 import { Logo } from './components/common/Logo';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
@@ -33,6 +34,7 @@ import { AllVehiclesView } from './components/admin/AllVehiclesView';
 import { CarCatalogView } from './components/admin/CarCatalogView';
 import { KycDesk, type KycKind } from './components/admin/KycDesk';
 import { AllPaymentsView, PlansCatalogView } from './components/admin/PlansPaymentsView';
+import { SupportTicketsView } from './components/admin/SupportTicketsView';
 import { AdminProfileSettings } from './components/admin/AdminProfileSettings';
 import { LegalPagesView } from './components/admin/LegalPagesView';
 import { api, getToken, setToken } from './lib/api';
@@ -115,6 +117,7 @@ export function App() {
     { id: 'agency-tour-posts', label: 'All tours', icon: MapPin },
     { id: 'deals', label: 'Inquiries', icon: Phone },
     { id: 'chats', label: 'Direct chats', icon: MessageCircle },
+    { id: 'support-tickets', label: 'Support tickets', icon: LifeBuoy },
     { id: 'plans', label: 'Plans', icon: Sparkles },
     { id: 'payments', label: 'Payment', icon: CreditCard },
     { id: 'legal', label: 'Website', icon: FileText },
@@ -132,6 +135,7 @@ export function App() {
     'agency-tour-posts': 'All tours',
     deals: 'Inquiries',
     chats: 'Direct chats',
+    'support-tickets': 'Support & help tickets',
     plans: 'Plans',
     payments: 'Payment',
     legal: 'Website content',
@@ -246,6 +250,7 @@ export function App() {
               {activeTab === 'agency-tour-posts' && <AgencyTourPostsManager />}
               {activeTab === 'deals' && <InquiriesDesk />}
               {activeTab === 'chats' && <AdminChatsView />}
+              {activeTab === 'support-tickets' && <SupportTicketsView />}
               {activeTab === 'plans' && <PlansCatalogView />}
               {activeTab === 'payments' && <AllPaymentsView />}
               {activeTab === 'legal' && <LegalPagesView />}

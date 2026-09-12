@@ -110,19 +110,9 @@ export const AgencyTourPostsManager: React.FC = () => {
 
   if (selected) {
     const extras = [
-      ['Tour type', selected.tourType],
-      ['Duration', selected.duration],
       ['Pickup', selected.pickupLocation],
       ['Drop', selected.dropLocation],
       ['Vehicle', selected.requiredVehicleType || selected.desiredCar?.name],
-      ['Toll', selected.tollTaxOption],
-      ['Parking', selected.parkingOption],
-      ['Night allowance', selected.driverNightAllowance],
-      ['Km limit', selected.kmLimit],
-      ['Luggage', selected.luggageCapacity],
-      ['Driver prefs', selected.driverPreferences],
-      ['Payment terms', selected.paymentTerms],
-      ['Payout mode', selected.payoutMode],
     ].filter(([, value]) => Boolean(value));
 
     return (
@@ -153,9 +143,18 @@ export const AgencyTourPostsManager: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Detail label="Passengers" value={`${selected.passengers} pax`} />
-            <Detail label="Customer price" value={money(selected.totalCustomerPrice)} />
-            <Detail label="Agency commission" value={money(selected.agencyCommission)} />
-            <Detail label="Driver payout" value={money(selected.driverNetPayout)} />
+            <Detail
+              label="Customer price"
+              value={selected.totalCustomerPrice > 0 ? money(selected.totalCustomerPrice) : 'Quotation invited'}
+            />
+            <Detail
+              label="Agency commission"
+              value={selected.totalCustomerPrice > 0 ? money(selected.agencyCommission) : '—'}
+            />
+            <Detail
+              label="Driver payout"
+              value={selected.totalCustomerPrice > 0 ? money(selected.driverNetPayout) : 'Open for quotes'}
+            />
             <Detail label="Travel date" value={selected.startDate || '—'} />
             <Detail label="Pickup time" value={selected.pickupTime || '—'} />
             <Detail label="Posted" value={when(selected.createdAt)} />
@@ -172,10 +171,6 @@ export const AgencyTourPostsManager: React.FC = () => {
 
           {selected.desiredCar?.specs?.length ? (
             <p className="text-[11px] text-[#6B6B6B]">Car specs: {selected.desiredCar.specs.join(', ')}</p>
-          ) : null}
-
-          {selected.routeHighlights?.length ? (
-            <p className="text-[11px] text-[#6B6B6B]">Highlights: {selected.routeHighlights.join(' · ')}</p>
           ) : null}
 
           {selected.tripDetails && (
@@ -297,9 +292,8 @@ export const AgencyTourPostsManager: React.FC = () => {
                   <td className="py-3.5 px-4 font-mono font-bold whitespace-nowrap">
                     {post.agencyPhone ? `+91 ${post.agencyPhone}` : '—'}
                   </td>
-                  <td className="py-3.5 px-4 font-extrabold">{post.passengers}</td>
                   <td className="py-3.5 px-4 font-extrabold text-[#F15A24] whitespace-nowrap">
-                    {money(post.totalCustomerPrice)}
+                    {post.totalCustomerPrice > 0 ? money(post.totalCustomerPrice) : 'Quotation'}
                   </td>
                   <td className="py-3.5 px-4 text-[#6B6B6B] whitespace-nowrap">
                     {post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-IN') : '—'}

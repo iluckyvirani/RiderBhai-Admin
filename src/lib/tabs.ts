@@ -11,5 +11,6 @@ export type AdminTab =
   | 'chats'
   | 'plans'
   | 'payments'
+  | 'support-tickets'
   | 'legal'
   | 'settings';

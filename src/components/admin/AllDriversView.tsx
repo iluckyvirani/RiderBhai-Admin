@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IdCard, Search, MapPin, ChevronRight } from 'lucide-react';
+import { IdCard, Search, MapPin, ChevronRight, Ban, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import {
@@ -17,13 +17,16 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
   verifiedOnly,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<'pending' | 'verified' | 'rejected' | 'all'>(
+  const [filter, setFilter] = useState<'pending' | 'verified' | 'rejected' | 'blocked' | 'all'>(
     verifiedOnly ? 'verified' : 'pending'
   );
   const [rows, setRows] = useState<AdminDriverRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [blockTarget, setBlockTarget] = useState<AdminDriverRow | null>(null);
+  const [blockReason, setBlockReason] = useState('Violated community guidelines / unsafe driving');
+  const [blocking, setBlocking] = useState(false);
 
   const load = () => {
     if (!getToken()) {
@@ -45,13 +48,45 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
     pending: rows.filter((d) => d.verificationStatus === 'pending_verification').length,
     verified: rows.filter((d) => d.verificationStatus === 'verified').length,
     rejected: rows.filter((d) => d.verificationStatus === 'rejected').length,
+    blocked: rows.filter((d) => d.verificationStatus === 'blocked').length,
     all: rows.length,
+  };
+
+  const handleToggleBlock = async (driver: AdminDriverRow, targetState: boolean, reason?: string) => {
+    if (!driver.id) return;
+    setBlocking(true);
+    try {
+      await api(`/admin/drivers/${driver.id}`, {
+        method: 'POST',
+        json: {
+          decision: targetState ? 'blocked' : 'verified',
+          rejectionReason: targetState ? reason || 'Blocked by admin' : undefined,
+        },
+      });
+      setRows((prev) =>
+        prev.map((d) =>
+          d.id === driver.id
+            ? {
+                ...d,
+                verificationStatus: targetState ? 'blocked' : 'verified',
+                rejectionReason: targetState ? reason || 'Blocked by admin' : undefined,
+              }
+            : d
+        )
+      );
+      setBlockTarget(null);
+    } catch (err: any) {
+      setError(err?.message || `Could not ${targetState ? 'block' : 'unblock'} driver.`);
+    } finally {
+      setBlocking(false);
+    }
   };
 
   const filtered = rows.filter((driver) => {
     if (filter === 'pending' && driver.verificationStatus !== 'pending_verification') return false;
     if (filter === 'verified' && driver.verificationStatus !== 'verified') return false;
     if (filter === 'rejected' && driver.verificationStatus !== 'rejected') return false;
+    if (filter === 'blocked' && driver.verificationStatus !== 'blocked') return false;
     const q = searchTerm.toLowerCase();
     return (
       !q ||
@@ -116,8 +151,8 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
           />
         </div>
         {!verifiedOnly && (
-        <div className="flex gap-1">
-          {(['pending', 'verified', 'rejected', 'all'] as const).map((id) => (
+        <div className="flex flex-wrap gap-1">
+          {(['pending', 'verified', 'rejected', 'blocked', 'all'] as const).map((id) => (
             <button
               key={id}
               type="button"
@@ -153,49 +188,126 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((driver) => {
             const key = driver.id || `${driver.userId}-${driver.phone}`;
+            const isBlocked = driver.verificationStatus === 'blocked';
             return (
-              <button
+              <div
                 key={key}
-                type="button"
-                onClick={() => setSelectedId(key)}
-                className="text-left rounded-3xl border border-[#EBE5D8] bg-[#FAF6EE] p-4 space-y-3"
+                className="rounded-3xl border border-[#EBE5D8] bg-[#FAF6EE] p-4 space-y-3 flex flex-col justify-between"
               >
-                <div className="flex items-center gap-3">
-                  {isPreviewableImage(driver.selfieDoc) ? (
-                    <img
-                      src={driver.selfieDoc}
-                      alt=""
-                      className="w-12 h-12 rounded-2xl object-cover border border-[#EBE5D8]"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-2xl bg-[#FFF0EB] text-[#F15A24] flex items-center justify-center font-extrabold">
-                      {(driver.name || 'D').slice(0, 1)}
+                <div
+                  onClick={() => setSelectedId(key)}
+                  className="space-y-3 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    {isPreviewableImage(driver.selfieDoc) ? (
+                      <img
+                        src={driver.selfieDoc}
+                        alt=""
+                        className="w-12 h-12 rounded-2xl object-cover border border-[#EBE5D8]"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-[#FFF0EB] text-[#F15A24] flex items-center justify-center font-extrabold">
+                        {(driver.name || 'D').slice(0, 1)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-extrabold truncate">{driver.name}</p>
+                      <p className="text-[11px] text-[#6B6B6B] font-mono">+91 {driver.phone}</p>
+                      <p className="text-[11px] text-[#6B6B6B] truncate">{driver.email}</p>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-extrabold truncate">{driver.name}</p>
-                    <p className="text-[11px] text-[#6B6B6B] font-mono">+91 {driver.phone}</p>
-                    <p className="text-[11px] text-[#6B6B6B] truncate">{driver.email}</p>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-bold">
+                    <span className="inline-flex items-center gap-1 text-[#6B6B6B]">
+                      <MapPin className="w-3 h-3 text-[#F15A24]" />
+                      {driver.city || '—'}
+                    </span>
+                    <span>{driver.experienceYears} yrs</span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-[11px] font-bold">
-                  <span className="inline-flex items-center gap-1 text-[#6B6B6B]">
-                    <MapPin className="w-3 h-3 text-[#F15A24]" />
-                    {driver.city || '—'}
-                  </span>
-                  <span>{driver.experienceYears} yrs</span>
-                </div>
-                <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#EBE5D8]">
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#EBE5D8]">
                   <span className={`inline-flex px-2 py-0.5 rounded-full font-extrabold text-[10px] border ${kycClass(driver.verificationStatus)}`}>
                     {vehicleStatusLabel(driver.verificationStatus)}
                   </span>
-                  <span className="text-[11px] font-extrabold text-[#F15A24] inline-flex items-center gap-0.5">
-                    Details <ChevronRight className="w-4 h-4" />
-                  </span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    {isBlocked ? (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBlock(driver, false)}
+                        className="px-2.5 py-1 rounded-xl bg-[#00A86B] text-white text-[10px] font-extrabold flex items-center gap-1 hover:bg-[#008f5b] transition-all"
+                        title="Unblock driver"
+                      >
+                        <CheckCircle2 className="w-3 h-3" /> Unblock
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBlockTarget(driver);
+                          setBlockReason('Violated community guidelines / unsafe driving');
+                        }}
+                        className="px-2 py-1 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 text-[10px] font-extrabold flex items-center gap-1 transition-all"
+                        title="Block driver"
+                      >
+                        <Ban className="w-3 h-3" /> Block
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(key)}
+                      className="text-[11px] font-extrabold text-[#F15A24] inline-flex items-center gap-0.5 hover:underline"
+                    >
+                      Details <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </button>
+              </div>
             );
           })}
+        </div>
+      )}
+
+      {blockTarget && (
+        <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-5 w-full max-w-md space-y-3">
+            <div className="flex items-center gap-2 text-red-600">
+              <Ban className="w-5 h-5" />
+              <h3 className="text-sm font-extrabold">Block Driver: {blockTarget.name}</h3>
+            </div>
+            <p className="text-[11px] text-[#6B6B6B]">
+              Blocking this driver will immediately cancel and hide all active car postings for this driver. An instant notification will be sent to the owner.
+            </p>
+            <div>
+              <label className="text-[10px] font-extrabold text-[#6B6B6B] uppercase block mb-1">
+                Reason for blocking *
+              </label>
+              <textarea
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                rows={3}
+                placeholder="Reason for blocking..."
+                className="w-full rounded-2xl border border-[#EBE5D8] bg-[#FAF6EE] px-3 py-2 text-xs font-bold"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setBlockTarget(null)}
+                className="flex-1 py-2.5 rounded-xl bg-[#FAF6EE] text-xs font-extrabold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={blocking || blockReason.trim().length < 3}
+                onClick={() => handleToggleBlock(blockTarget, true, blockReason.trim())}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold disabled:opacity-50"
+              >
+                {blocking ? 'Blocking...' : 'Confirm Block'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

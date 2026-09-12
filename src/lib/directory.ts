@@ -9,10 +9,12 @@ export type AdminUserRow = {
   hasPlan: boolean;
   isDriver: boolean;
   vehicleCount: number;
+  isBlocked: boolean;
+  blockedReason?: string;
   createdAt: string;
 };
 
-export type VehicleVerification = 'pending_verification' | 'verified' | 'rejected';
+export type VehicleVerification = 'pending_verification' | 'verified' | 'rejected' | 'blocked';
 
 export type AdminVehicleRow = {
   id: string;
@@ -79,6 +81,8 @@ export function mapAdminUser(row: any): AdminUserRow {
     hasPlan: Boolean(row.has_plan),
     isDriver: Boolean(row.is_driver),
     vehicleCount: Number(row.vehicle_count || 0),
+    isBlocked: Boolean(row.is_blocked),
+    blockedReason: row.blocked_reason || undefined,
     createdAt: row.created_at || '',
   };
 }
@@ -139,7 +143,9 @@ export function mapAdminDriver(row: any): AdminDriverRow {
         ? 'verified'
         : row.verification_status === 'rejected'
           ? 'rejected'
-          : 'pending_verification',
+          : row.verification_status === 'blocked'
+            ? 'blocked'
+            : 'pending_verification',
     rejectionReason: row.rejection_reason || undefined,
   };
 }
@@ -148,6 +154,7 @@ export function kycLabel(status: string) {
   if (status === 'verified') return 'Verified';
   if (status === 'pending_verification') return 'Pending KYC';
   if (status === 'rejected') return 'Rejected';
+  if (status === 'blocked') return 'Blocked';
   return 'Incomplete';
 }
 
@@ -155,11 +162,13 @@ export function kycClass(status: string) {
   if (status === 'verified') return 'bg-[#EBF7EE] text-[#00A86B] border-[#BDE8C7]';
   if (status === 'pending_verification') return 'bg-amber-50 text-amber-700 border-amber-200';
   if (status === 'rejected') return 'bg-red-50 text-red-600 border-red-200';
+  if (status === 'blocked') return 'bg-red-100 text-red-800 border-red-300';
   return 'bg-[#FAF6EE] text-[#6B6B6B] border-[#EBE5D8]';
 }
 
 export function vehicleStatusLabel(status?: string) {
   if (status === 'verified') return 'Verified';
   if (status === 'rejected') return 'Rejected';
+  if (status === 'blocked') return 'Blocked';
   return 'Pending verification';
 }

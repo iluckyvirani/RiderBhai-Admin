@@ -764,16 +764,6 @@ export function useAppStore() {
       totalCustomerPrice: number;
       agencyCommission: number;
       tripDetails: string;
-      routeHighlights?: string[];
-      tourType?: string;
-      tollTaxOption?: string;
-      parkingOption?: string;
-      driverNightAllowance?: string;
-      kmLimit?: string;
-      luggageCapacity?: string;
-      driverPreferences?: string;
-      paymentTerms?: string;
-      payoutMode?: string;
     }) => {
       const gateCheck = canAgencyPost(currentAgency.id);
       if (!gateCheck.canPost) {

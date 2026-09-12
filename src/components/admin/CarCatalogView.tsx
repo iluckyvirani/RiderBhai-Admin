@@ -4,7 +4,7 @@ import { api, getToken } from '../../lib/api';
 import { AdminPageSkeleton, ButtonSpinner } from '../common/AdminLoading';
 import { EmptyState } from '../common/EmptyState';
 
-type BodyType = 'hatchback' | 'sedan' | 'suv' | 'muv';
+type BodyType = 'hatchback' | 'sedan' | 'suv' | 'muv' | 'traveler' | 'bus' | 'commercial';
 
 type TaxiCar = {
   id: string;
@@ -28,6 +28,9 @@ const BODY_TYPES: { id: BodyType; label: string }[] = [
   { id: 'sedan', label: 'Sedan' },
   { id: 'suv', label: 'SUV' },
   { id: 'muv', label: 'MUV / Innova class' },
+  { id: 'traveler', label: 'Traveller' },
+  { id: 'bus', label: 'Bus' },
+  { id: 'commercial', label: 'Commercial' },
 ];
 
 const field =

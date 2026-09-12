@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, Search, MapPin, ShieldCheck, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Users, Search, MapPin, ShieldCheck, Eye, Pencil, Trash2, Ban, CheckCircle, ShieldAlert } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { isListedAdmin, kycClass, kycLabel, mapAdminUser, type AdminUserRow } from '../../lib/directory';
@@ -16,6 +16,9 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
   const [editUser, setEditUser] = useState<AdminUserRow | null>(null);
   const [deleteUser, setDeleteUser] = useState<AdminUserRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [blockUser, setBlockUser] = useState<AdminUserRow | null>(null);
+  const [blockReason, setBlockReason] = useState('');
+  const [blocking, setBlocking] = useState(false);
 
   const load = useCallback(async () => {
     if (!getToken()) {
@@ -52,6 +55,54 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
     }
   };
 
+  const openBlockModal = (user: AdminUserRow) => {
+    setBlockUser(user);
+    setBlockReason(user.blockedReason || (user.isBlocked ? '' : 'Violated community guidelines'));
+  };
+
+  const handleToggleBlock = async () => {
+    if (!blockUser) return;
+    setBlocking(true);
+    const targetState = !blockUser.isBlocked;
+    try {
+      let updated: any;
+      try {
+        updated = await api<any>(`/admin/users/${blockUser.id}/block`, {
+          method: 'POST',
+          json: {
+            isBlocked: targetState,
+            reason: targetState ? blockReason : undefined,
+          },
+        });
+      } catch {
+        updated = await api<any>(`/admin/users/${blockUser.id}`, {
+          method: 'PATCH',
+          json: {
+            isBlocked: targetState,
+            blockedReason: targetState ? blockReason : null,
+          },
+        });
+      }
+
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === blockUser.id
+            ? {
+                ...row,
+                isBlocked: Boolean(updated.is_blocked !== undefined ? updated.is_blocked : targetState),
+                blockedReason: (updated.blocked_reason !== undefined ? updated.blocked_reason : (targetState ? blockReason : undefined)) || undefined,
+              }
+            : row
+        )
+      );
+      setBlockUser(null);
+    } catch (err: any) {
+      setError(err?.message || `Could not ${targetState ? 'block' : 'unblock'} user.`);
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   const filtered = rows.filter((user) => {
     if (verifiedOnly && user.profileStatus !== 'verified') return false;
     const q = searchTerm.toLowerCase();
@@ -79,9 +130,16 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
               : 'Every account on Neon — KYC, plan, and driver status.'}
           </p>
         </div>
-        <span className="text-xs font-extrabold bg-[#FFF0EB] text-[#F15A24] px-3 py-1.5 rounded-2xl border border-[#FFD8CB] w-fit">
-          {filtered.length} {verifiedOnly ? 'verified' : 'users'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-extrabold bg-[#FFF0EB] text-[#F15A24] px-3 py-1.5 rounded-2xl border border-[#FFD8CB] w-fit">
+            {filtered.length} {verifiedOnly ? 'verified' : 'users'}
+          </span>
+          {rows.some((r) => r.isBlocked) && (
+            <span className="text-xs font-extrabold bg-red-100 text-red-700 px-3 py-1.5 rounded-2xl border border-red-200 w-fit">
+              {rows.filter((r) => r.isBlocked).length} blocked
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="relative">
@@ -126,9 +184,19 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
           </thead>
           <tbody className="divide-y divide-[#F2ECE1]">
             {filtered.map((user) => (
-              <tr key={user.id} className="hover:bg-[#FFFDF9]">
+              <tr key={user.id} className={`hover:bg-[#FFFDF9] transition ${user.isBlocked ? 'bg-red-50/40' : ''}`}>
                 <td className="py-3.5 px-4">
-                  <p className="font-extrabold text-[#1C1C1C]">{user.name || 'Unnamed'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-extrabold text-[#1C1C1C]">{user.name || 'Unnamed'}</p>
+                    {user.isBlocked && (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-black uppercase text-red-700 border border-red-300">
+                        <Ban className="h-2.5 w-2.5" /> Blocked
+                      </span>
+                    )}
+                  </div>
+                  {user.isBlocked && user.blockedReason && (
+                    <p className="text-[10px] text-red-600 font-semibold mt-0.5 italic">"{user.blockedReason}"</p>
+                  )}
                 </td>
                 <td className="py-3.5 px-4 font-mono font-bold text-[#1C1C1C] whitespace-nowrap">
                   {user.phone ? `+91 ${user.phone}` : <span className="text-[#B8B2A6]">—</span>}
@@ -167,6 +235,7 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
                       type="button"
                       onClick={() => setViewId(user.id)}
                       className="inline-flex items-center gap-1 rounded-lg border border-[#EBE5D8] bg-[#FAF6EE] px-2 py-1 text-[11px] font-extrabold hover:bg-[#1C1C1C] hover:text-white"
+                      title="View user details"
                     >
                       <Eye className="h-3.5 w-3.5" /> View
                     </button>
@@ -174,13 +243,35 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
                       type="button"
                       onClick={() => setEditUser(user)}
                       className="inline-flex items-center gap-1 rounded-lg border border-[#EBE5D8] bg-white px-2 py-1 text-[11px] font-extrabold hover:border-[#F15A24] hover:text-[#F15A24]"
+                      title="Edit user details"
                     >
                       <Pencil className="h-3.5 w-3.5" /> Edit
                     </button>
                     <button
                       type="button"
+                      onClick={() => openBlockModal(user)}
+                      className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-extrabold transition ${
+                        user.isBlocked
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white'
+                          : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white'
+                      }`}
+                      title={user.isBlocked ? 'Unblock user' : 'Block user from platform'}
+                    >
+                      {user.isBlocked ? (
+                        <>
+                          <CheckCircle className="h-3.5 w-3.5" /> Unblock
+                        </>
+                      ) : (
+                        <>
+                          <Ban className="h-3.5 w-3.5" /> Block
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setDeleteUser(user)}
                       className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-extrabold text-red-600 hover:bg-red-600 hover:text-white"
+                      title="Delete user account"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </button>
@@ -204,6 +295,77 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
           }}
         />
       )}
+
+      {/* Block / Unblock Modal */}
+      {blockUser && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-4">
+          <div className="w-full max-w-md space-y-4 rounded-3xl bg-white p-5 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${blockUser.isBlocked ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                {blockUser.isBlocked ? <ShieldCheck className="h-5 w-5" /> : <ShieldAlert className="h-5 w-5" />}
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-[#1C1C1C]">
+                  {blockUser.isBlocked ? 'Unblock' : 'Block'} {blockUser.name || blockUser.phone}?
+                </h3>
+                <p className="text-xs text-[#6B6B6B]">
+                  Phone: +91 {blockUser.phone}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs leading-relaxed text-[#6B6B6B]">
+              {blockUser.isBlocked
+                ? 'Unblocking will immediately restore the user’s ability to log in, post vehicles/tours, and chat with buyers.'
+                : 'Blocking this user will immediately revoke their access. They will be prevented from logging in or using any booking, chat, or posting features.'}
+            </p>
+
+            {!blockUser.isBlocked && (
+              <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
+                Reason for blocking
+                <input
+                  type="text"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="e.g. Fraudulent behavior, fake docs, violation of terms"
+                  className="mt-1 w-full rounded-xl border border-[#EBE5D8] bg-[#FAF6EE] px-3 py-2 text-xs font-bold text-[#1C1C1C] outline-none focus:border-[#F15A24]"
+                />
+              </label>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleToggleBlock}
+                disabled={blocking}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-2.5 text-xs font-extrabold text-white transition disabled:opacity-60 ${
+                  blockUser.isBlocked
+                    ? 'bg-emerald-600 hover:bg-emerald-700'
+                    : 'bg-amber-600 hover:bg-amber-700'
+                }`}
+              >
+                {blocking ? (
+                  <>
+                    <ButtonSpinner /> {blockUser.isBlocked ? 'Unblocking…' : 'Blocking…'}
+                  </>
+                ) : blockUser.isBlocked ? (
+                  'Confirm Unblock'
+                ) : (
+                  'Confirm Block'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBlockUser(null)}
+                className="flex-1 rounded-2xl bg-[#FAF6EE] py-2.5 text-xs font-extrabold text-[#1C1C1C] hover:bg-[#EBE5D8]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {deleteUser && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-4">
           <div className="w-full max-w-md space-y-3 rounded-3xl bg-white p-5">

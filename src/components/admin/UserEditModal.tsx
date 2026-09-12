@@ -19,6 +19,8 @@ export function UserEditModal({
   const [city, setCity] = useState(user.city || '');
   const [agencyName, setAgencyName] = useState(user.agencyName || '');
   const [profileStatus, setProfileStatus] = useState(user.profileStatus);
+  const [isBlocked, setIsBlocked] = useState(Boolean(user.isBlocked));
+  const [blockedReason, setBlockedReason] = useState(user.blockedReason || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,7 +31,16 @@ export function UserEditModal({
     try {
       const row = await api<any>(`/admin/users/${user.id}`, {
         method: 'PATCH',
-        json: { name, email, phone, city, agencyName, profileStatus },
+        json: {
+          name,
+          email,
+          phone,
+          city,
+          agencyName,
+          profileStatus,
+          isBlocked,
+          blockedReason: isBlocked ? (blockedReason || 'Blocked by admin') : null,
+        },
       });
       onSaved({
         ...user,
@@ -39,6 +50,8 @@ export function UserEditModal({
         city: row.city || undefined,
         agencyName: row.agency_name || undefined,
         profileStatus: row.profile_status || profileStatus,
+        isBlocked: Boolean(row.is_blocked !== undefined ? row.is_blocked : isBlocked),
+        blockedReason: row.blocked_reason || undefined,
       });
     } catch (err: any) {
       setError(err?.message || 'Could not save user.');
@@ -49,7 +62,7 @@ export function UserEditModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-4">
-      <form onSubmit={save} className="w-full max-w-md space-y-3 rounded-3xl bg-white p-5">
+      <form onSubmit={save} className="w-full max-w-md max-h-[90vh] overflow-y-auto space-y-3 rounded-3xl bg-white p-5">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-extrabold">Edit user</h3>
           <button type="button" onClick={onClose} className="rounded-xl bg-[#FAF6EE] p-2">
@@ -86,6 +99,37 @@ export function UserEditModal({
             <option value="rejected">Rejected</option>
           </select>
         </label>
+
+        <div className="rounded-2xl border border-red-200 bg-red-50/50 p-3.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-extrabold text-[#1C1C1C]">Account Block Status</p>
+              <p className="text-[11px] text-[#6B6B6B]">Blocked users cannot log in or post</p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={isBlocked}
+                onChange={(e) => setIsBlocked(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div className="h-6 w-11 rounded-full bg-neutral-300 peer-checked:bg-red-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full" />
+            </label>
+          </div>
+          {isBlocked && (
+            <label className="block text-[11px] font-extrabold uppercase text-red-700">
+              Block reason
+              <input
+                type="text"
+                value={blockedReason}
+                onChange={(e) => setBlockedReason(e.target.value)}
+                placeholder="e.g. Fraudulent behavior, fake docs"
+                className="mt-1 w-full rounded-xl border border-red-300 bg-white px-3 py-2 text-xs font-bold text-[#1C1C1C] outline-none"
+              />
+            </label>
+          )}
+        </div>
+
         <button type="submit" disabled={saving} className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#F15A24] text-xs font-extrabold text-white disabled:opacity-60">
           {saving ? <><ButtonSpinner /> Saving</> : 'Save changes'}
         </button>

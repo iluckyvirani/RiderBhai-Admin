@@ -1,6 +1,6 @@
 export type UserRole = 'rider' | 'driver' | 'agency' | 'admin';
 
-export type DriverStatus = 'unverified' | 'pending_verification' | 'verified' | 'rejected';
+export type DriverStatus = 'unverified' | 'pending_verification' | 'verified' | 'rejected' | 'blocked';
 
 export type AgencyStatus = 'unverified' | 'pending_verification' | 'verified' | 'rejected';
 
@@ -199,7 +199,6 @@ export interface AgencyTripPost {
   agencyRating: number;
   fromCity: string;
   toCity: string;
-  routeHighlights?: string[];
   passengers: number;
   duration: string;
   startDate: string;
@@ -213,15 +212,6 @@ export interface AgencyTripPost {
   agencyCommission: number; // e.g. ₹200
   driverNetPayout: number; // e.g. ₹800 (totalCustomerPrice - agencyCommission)
   tripDetails: string; // Full itinerary, inclusions & requirements
-  tourType?: string; // e.g. "Family Tour", "Sightseeing", "Pilgrimage", "Corporate", "Honeymoon"
-  tollTaxOption?: string; // e.g. "Paid directly by Guest at tolls", "Included in Fare", "Extra on actuals"
-  parkingOption?: string; // e.g. "Paid by Guest on spots", "Included in package"
-  driverNightAllowance?: string; // e.g. "₹300/Night included", "Provided by guest", "No night stay"
-  kmLimit?: string; // e.g. "750 Km package (₹11/Km extra beyond limit)"
-  luggageCapacity?: string; // e.g. "2 Large Trolley + 2 Handbags"
-  driverPreferences?: string; // e.g. "Hindi/English speaking driver, AC throughout journey, Non-smoking vehicle"
-  paymentTerms?: string; // e.g. "₹500 advance collected by agency, balance ₹300 direct to driver on completion"
-  payoutMode?: string; // e.g. "Direct Cash from Guest", "Instant UPI by Agency", "Split 50-50"
   status: AgencyTripStatus;
   createdAt: string;
   claimedByDriverId?: string;
@@ -385,12 +375,28 @@ export interface CityLocation {
 
 export type AppViewMode = 'landing' | 'rider-app' | 'driver-app' | 'agency-app' | 'admin-portal';
 
-export interface AuthState {
-  isRiderLoggedIn: boolean;
-  isDriverLoggedIn: boolean;
-  isAgencyLoggedIn?: boolean;
-  riderPhone?: string;
-  driverPhone?: string;
-  agencyPhone?: string;
+export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type TicketPriority = 'normal' | 'high' | 'urgent';
+export type TicketCategory = 'booking' | 'payment' | 'kyc' | 'listing' | 'account' | 'general';
+
+export interface SupportTicket {
+  id: string;
+  user_id: string;
+  ticket_number: string;
+  category: TicketCategory;
+  subject: string;
+  description: string;
+  priority: TicketPriority;
+  status: TicketStatus;
+  admin_notes?: string;
+  resolution_notes?: string;
+  attachment_url?: string;
+  created_at: string;
+  updated_at: string;
+  user_name?: string;
+  user_phone?: string;
+  user_email?: string;
+  user_city?: string;
+  user_agency_name?: string;
 }
 

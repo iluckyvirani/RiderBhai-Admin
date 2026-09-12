@@ -42,6 +42,8 @@ type ProfileUser = {
   aadhaar_doc?: string;
   selfie_doc?: string;
   profile_status: string;
+  is_blocked?: boolean;
+  blocked_reason?: string;
   created_at?: string;
 };
 
@@ -238,6 +240,15 @@ export function UserProfileModal({
 
           {!loading && user && tab === 'overview' && (
             <div className="space-y-4">
+              {user.is_blocked && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-800 flex items-start gap-2.5">
+                  <span className="font-extrabold uppercase bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-0.5">Blocked</span>
+                  <div>
+                    <p className="font-bold">This user account is currently blocked.</p>
+                    {user.blocked_reason && <p className="text-[11px] text-red-700 mt-0.5">Reason: {user.blocked_reason}</p>}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-3xl border border-[#EBE5D8] bg-[#FAF6EE] p-4 space-y-2">
                   <p className="text-[10px] font-extrabold uppercase text-[#8A8478]">Account</p>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle2, XCircle, IdCard } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, IdCard, Ban, ShieldAlert } from 'lucide-react';
 import { api } from '../../lib/api';
 import {
   kycClass,
@@ -18,9 +18,11 @@ export const DriverDetailsView: React.FC<{
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
   const [note, setNote] = useState('');
+  const [blockReason, setBlockReason] = useState('Violated community guidelines / unsafe driving');
 
-  const decide = async (decision: 'verified' | 'rejected', reason?: string) => {
+  const decide = async (decision: 'verified' | 'rejected' | 'blocked', reason?: string) => {
     if (!driver.id) return;
     setBusy(true);
     setError('');
@@ -32,9 +34,10 @@ export const DriverDetailsView: React.FC<{
       onUpdated({
         ...driver,
         verificationStatus: decision,
-        rejectionReason: decision === 'rejected' ? reason : undefined,
+        rejectionReason: decision === 'rejected' || decision === 'blocked' ? reason : undefined,
       });
       setRejectOpen(false);
+      setBlockOpen(false);
     } catch (err: any) {
       setError(err?.message || 'Could not update driver.');
     } finally {
@@ -66,6 +69,17 @@ export const DriverDetailsView: React.FC<{
             {vehicleStatusLabel(driver.verificationStatus)}
           </span>
         </div>
+
+        {driver.verificationStatus === 'blocked' && (
+          <div className="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-2xl p-3 flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-extrabold text-red-800">This driver is currently BLOCKED</p>
+              <p className="mt-0.5 text-red-600">{driver.rejectionReason || 'Violated community guidelines'}</p>
+              <p className="mt-1 text-[10px] text-red-500">All car postings with this driver are automatically hidden from users.</p>
+            </div>
+          </div>
+        )}
 
         {driver.verificationStatus === 'rejected' && driver.rejectionReason && (
           <p className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-2xl p-3">
@@ -108,16 +122,29 @@ export const DriverDetailsView: React.FC<{
 
         {error && <p className="text-[11px] font-bold text-red-600 bg-red-50 p-2.5 rounded-2xl">{error}</p>}
 
-        {driver.verificationStatus !== 'verified' && (
+        {driver.verificationStatus === 'blocked' ? (
           <div className="flex gap-2">
             <button
               type="button"
               disabled={busy}
               onClick={() => decide('verified')}
-              className="flex-1 py-3 rounded-2xl bg-[#00A86B] text-white text-xs font-extrabold disabled:opacity-60"
+              className="flex-1 py-3 rounded-2xl bg-[#00A86B] hover:bg-[#008f5b] text-white text-xs font-extrabold disabled:opacity-60 transition-all flex items-center justify-center gap-1.5"
             >
-              <CheckCircle2 className="w-4 h-4 inline mr-1" /> Verify driver
+              <CheckCircle2 className="w-4 h-4" /> Unblock & Verify Driver
             </button>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {driver.verificationStatus !== 'verified' && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => decide('verified')}
+                className="flex-1 min-w-[140px] py-3 rounded-2xl bg-[#00A86B] hover:bg-[#008f5b] text-white text-xs font-extrabold disabled:opacity-60 transition-all flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Verify driver
+              </button>
+            )}
             {driver.verificationStatus === 'pending_verification' && (
               <button
                 type="button"
@@ -126,11 +153,22 @@ export const DriverDetailsView: React.FC<{
                   setNote('');
                   setRejectOpen(true);
                 }}
-                className="flex-1 py-3 rounded-2xl bg-white border border-red-200 text-red-600 text-xs font-extrabold disabled:opacity-60"
+                className="flex-1 min-w-[120px] py-3 rounded-2xl bg-white border border-red-200 text-red-600 text-xs font-extrabold disabled:opacity-60 transition-all flex items-center justify-center gap-1.5"
               >
-                <XCircle className="w-4 h-4 inline mr-1" /> Reject
+                <XCircle className="w-4 h-4" /> Reject
               </button>
             )}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setBlockReason('Violated community guidelines / unsafe driving');
+                setBlockOpen(true);
+              }}
+              className="flex-1 min-w-[120px] py-3 rounded-2xl bg-red-50 hover:bg-red-600 hover:text-white border border-red-200 text-red-600 text-xs font-extrabold disabled:opacity-60 transition-all flex items-center justify-center gap-1.5"
+            >
+              <Ban className="w-4 h-4" /> Block Driver
+            </button>
           </div>
         )}
       </div>
@@ -162,6 +200,49 @@ export const DriverDetailsView: React.FC<{
                 className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-xs font-extrabold disabled:opacity-50"
               >
                 Reject driver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {blockOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-5 w-full max-w-md space-y-3">
+            <div className="flex items-center gap-2 text-red-600">
+              <Ban className="w-5 h-5" />
+              <h3 className="text-sm font-extrabold">Block Driver: {driver.name}</h3>
+            </div>
+            <p className="text-[11px] text-[#6B6B6B]">
+              Blocking this driver will automatically cancel and hide all their active car listings. The user will receive an instant notification.
+            </p>
+            <div>
+              <label className="text-[10px] font-extrabold text-[#6B6B6B] uppercase block mb-1">
+                Reason for blocking *
+              </label>
+              <textarea
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                rows={3}
+                placeholder="Reason for blocking (e.g. misconduct, expired documents, reckless driving)..."
+                className="w-full rounded-2xl border border-[#EBE5D8] bg-[#FAF6EE] px-3 py-2 text-xs font-bold"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setBlockOpen(false)}
+                className="flex-1 py-2.5 rounded-xl bg-[#FAF6EE] text-xs font-extrabold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy || blockReason.trim().length < 3}
+                onClick={() => decide('blocked', blockReason.trim())}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold disabled:opacity-50"
+              >
+                Confirm Block
               </button>
             </div>
           </div>
