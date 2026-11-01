@@ -430,12 +430,13 @@ export const PlansCatalogView: React.FC = () => {
 };
 
 function paymentMethodLabel(method?: string) {
+  if (method === 'razorpay') return 'Razorpay';
   if (method === 'card') return 'Card';
   return 'Self transfer';
 }
 
 export const AllPaymentsView: React.FC = () => {
-  const [filter, setFilter] = useState<'all' | 'active' | 'self_transfer' | 'card'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'razorpay' | 'self_transfer' | 'card'>('all');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<Sub[]>([]);
   const [loading, setLoading] = useState(true);
@@ -458,9 +459,10 @@ export const AllPaymentsView: React.FC = () => {
   const q = search.toLowerCase();
   const filtered = rows.filter((row) => {
     const live = new Date(row.expires_at).getTime() > Date.now();
-    const method = row.payment_method === 'card' ? 'card' : 'self_transfer';
+    const method = row.payment_method || 'self_transfer';
     if (filter === 'active' && !live) return false;
-    if (filter === 'self_transfer' && method !== 'self_transfer') return false;
+    if (filter === 'razorpay' && method !== 'razorpay') return false;
+    if (filter === 'self_transfer' && method !== 'self_transfer' && method !== 'upi') return false;
     if (filter === 'card' && method !== 'card') return false;
     if (!q) return true;
     return (
@@ -475,7 +477,8 @@ export const AllPaymentsView: React.FC = () => {
   const counts = {
     all: rows.length,
     active: rows.filter((row) => new Date(row.expires_at).getTime() > Date.now()).length,
-    self_transfer: rows.filter((row) => row.payment_method !== 'card').length,
+    razorpay: rows.filter((row) => row.payment_method === 'razorpay').length,
+    self_transfer: rows.filter((row) => row.payment_method !== 'card' && row.payment_method !== 'razorpay').length,
     card: rows.filter((row) => row.payment_method === 'card').length,
   };
 
@@ -505,6 +508,7 @@ export const AllPaymentsView: React.FC = () => {
             [
               ['all', `All ${counts.all}`],
               ['active', `Active ${counts.active}`],
+              ['razorpay', `Razorpay ${counts.razorpay}`],
               ['self_transfer', `Self transfer ${counts.self_transfer}`],
               ['card', `Card ${counts.card}`],
             ] as const
