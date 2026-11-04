@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Car, Eye, MapPin, Search } from 'lucide-react';
+import { ArrowLeft, Car, Eye, MapPin, Search, Tag } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { mapCarListing } from '../../lib/listings';
+import { formatCarId } from '../../lib/displayId';
 import { CarListing } from '../../types';
 import { AdminPageSkeleton } from '../common/AdminLoading';
 
@@ -83,8 +84,10 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
     if (statusFilter === 'live' && c.status !== 'available') return false;
     if (statusFilter === 'hidden' && c.status === 'available') return false;
     const s = q.toLowerCase();
+    const carId = (c.displayId || formatCarId(c.id)).toLowerCase();
     return (
       !s ||
+      carId.includes(s) ||
       c.carName.toLowerCase().includes(s) ||
       c.partnerName.toLowerCase().includes(s) ||
       c.currentCity.toLowerCase().includes(s) ||
@@ -209,7 +212,7 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search car, partner, city, plate…"
+          placeholder="Search Car ID (e.g. RB-CR-1001), car, partner, city, plate…"
           className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
         />
       </div>
@@ -236,6 +239,7 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
             <thead>
               <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
                 <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Car ID</th>
                 <th className="py-3 px-4">Car</th>
                 <th className="py-3 px-4">Route</th>
                 <th className="py-3 px-4">Partner</th>
@@ -260,6 +264,12 @@ export const AllCarListingsView: React.FC<{ liveOnly?: boolean }> = () => {
                         }`}
                       >
                         {live ? 'Live' : 'Hidden'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs">
+                        <Tag className="w-3 h-3 text-[#F15A24]" />
+                        {c.displayId || formatCarId(c.id)}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">

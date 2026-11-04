@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, Search, MapPin, ShieldCheck, Eye, Pencil, Trash2, Ban, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Users, Search, MapPin, ShieldCheck, Eye, Pencil, Trash2, Ban, CheckCircle, ShieldAlert, Tag } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { isListedAdmin, kycClass, kycLabel, mapAdminUser, type AdminUserRow } from '../../lib/directory';
+import { formatUserId } from '../../lib/displayId';
 import { AdminPageSkeleton, ButtonSpinner } from '../common/AdminLoading';
 import { UserProfileModal } from './UserProfileModal';
 import { UserEditModal } from './UserEditModal';
@@ -106,8 +107,10 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
   const filtered = rows.filter((user) => {
     if (verifiedOnly && user.profileStatus !== 'verified') return false;
     const q = searchTerm.toLowerCase();
+    const userId = (user.displayId || formatUserId(user.id)).toLowerCase();
     return (
       !q ||
+      userId.includes(q) ||
       user.name.toLowerCase().includes(q) ||
       user.phone.includes(searchTerm) ||
       user.email.toLowerCase().includes(q) ||
@@ -147,7 +150,7 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search name, phone, email, city, agency…"
+          placeholder="Search User ID (e.g. RB-US-1001), name, phone, email, city, agency…"
           className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
         />
       </div>
@@ -171,6 +174,7 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
+              <th className="py-3 px-4">User ID</th>
               <th className="py-3 px-4">User</th>
               <th className="py-3 px-4">Phone</th>
               <th className="py-3 px-4">Email</th>
@@ -185,8 +189,14 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
           <tbody className="divide-y divide-[#F2ECE1]">
             {filtered.map((user) => (
               <tr key={user.id} className={`hover:bg-[#FFFDF9] transition ${user.isBlocked ? 'bg-red-50/40' : ''}`}>
+                <td className="py-3.5 px-4 whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs">
+                    <Tag className="w-3 h-3 text-[#F15A24]" />
+                    {user.displayId || formatUserId(user.id)}
+                  </span>
+                </td>
                 <td className="py-3.5 px-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-extrabold text-[#1C1C1C]">{user.name || 'Unnamed'}</p>
                     {user.isBlocked && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[9px] font-black uppercase text-red-700 border border-red-300">

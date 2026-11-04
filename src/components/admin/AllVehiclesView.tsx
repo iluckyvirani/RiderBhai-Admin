@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Car, Search, ChevronRight } from 'lucide-react';
+import { Car, Search, ChevronRight, Tag } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import {
@@ -8,6 +8,7 @@ import {
   mapAdminVehicle,
   type AdminVehicleRow,
 } from '../../lib/directory';
+import { formatVehicleId } from '../../lib/displayId';
 import { AdminPageSkeleton } from '../common/AdminLoading';
 import { VehicleDetailsView } from './VehicleDetailsView';
 
@@ -52,8 +53,10 @@ export const AllVehiclesView: React.FC<{ hideTitle?: boolean; verifiedOnly?: boo
     if (filter === 'verified' && veh.verificationStatus !== 'verified') return false;
     if (filter === 'rejected' && veh.verificationStatus !== 'rejected') return false;
     const q = searchTerm.toLowerCase();
+    const vehicleId = (veh.displayId || formatVehicleId(veh.id)).toLowerCase();
     return (
       !q ||
+      vehicleId.includes(q) ||
       veh.make.toLowerCase().includes(q) ||
       veh.model.toLowerCase().includes(q) ||
       veh.plate.toLowerCase().includes(q) ||
@@ -109,7 +112,7 @@ export const AllVehiclesView: React.FC<{ hideTitle?: boolean; verifiedOnly?: boo
           <input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search model, plate, owner…"
+            placeholder="Search Vehicle ID (e.g. RB-VH-1001), model, plate, owner…"
             className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
           />
         </div>
@@ -156,10 +159,16 @@ export const AllVehiclesView: React.FC<{ hideTitle?: boolean; verifiedOnly?: boo
               onClick={() => setSelectedId(veh.id)}
               className="text-left rounded-3xl border border-[#EBE5D8] bg-[#FAF6EE] p-4 space-y-3 active-press"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-mono font-extrabold text-xs bg-[#1C1C1C] text-white px-2.5 py-1 rounded-xl">
-                  {veh.plate}
-                </span>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-mono font-extrabold text-xs bg-[#1C1C1C] text-white px-2.5 py-1 rounded-xl">
+                    {veh.plate}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl text-[10px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs whitespace-nowrap">
+                    <Tag className="w-2.5 h-2.5 text-[#F15A24]" />
+                    {veh.displayId || formatVehicleId(veh.id)}
+                  </span>
+                </div>
                 {veh.year ? (
                   <span className="text-[10px] font-extrabold text-[#6B6B6B] bg-white px-2 py-0.5 rounded-lg border border-[#EBE5D8]">
                     {veh.year}

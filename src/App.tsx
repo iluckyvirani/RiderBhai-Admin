@@ -5,7 +5,6 @@ import {
   Car,
   MapPin,
   Phone,
-  Lock,
   LogOut,
   User,
   Users,
@@ -20,6 +19,7 @@ import {
   IdCard,
   Tags,
   LifeBuoy,
+  UserCheck,
 } from 'lucide-react';
 import { Logo } from './components/common/Logo';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
@@ -34,6 +34,7 @@ import { AllVehiclesView } from './components/admin/AllVehiclesView';
 import { CarCatalogView } from './components/admin/CarCatalogView';
 import { KycDesk, type KycKind } from './components/admin/KycDesk';
 import { AllPaymentsView, PlansCatalogView } from './components/admin/PlansPaymentsView';
+import { PlanSubscribersView } from './components/admin/PlanSubscribersView';
 import { SupportTicketsView } from './components/admin/SupportTicketsView';
 import { AdminProfileSettings } from './components/admin/AdminProfileSettings';
 import { LegalPagesView } from './components/admin/LegalPagesView';
@@ -119,6 +120,7 @@ export function App() {
     { id: 'chats', label: 'Direct chats', icon: MessageCircle },
     { id: 'support-tickets', label: 'Support tickets', icon: LifeBuoy },
     { id: 'plans', label: 'Plans', icon: Sparkles },
+    { id: 'subscribers', label: 'Plan subscribers', icon: UserCheck },
     { id: 'payments', label: 'Payment', icon: CreditCard },
     { id: 'legal', label: 'Website', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -137,6 +139,7 @@ export function App() {
     chats: 'Direct chats',
     'support-tickets': 'Support & help tickets',
     plans: 'Plans',
+    subscribers: 'Plan subscribers',
     payments: 'Payment',
     legal: 'Website content',
     settings: 'Settings',
@@ -154,12 +157,17 @@ export function App() {
         }`}
       >
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('dashboard')}
+            className="flex items-center gap-3 text-left active-press"
+            title="Go to Admin Dashboard"
+          >
             <Logo size="sm" showTagline={false} variant="light" />
             <span className="px-2 py-0.5 bg-[#F15A24] text-white font-extrabold text-[9px] uppercase rounded-md">
               Live
             </span>
-          </div>
+          </button>
           <button type="button" onClick={() => setSidebarOpen(false)} className="lg:hidden p-1">
             <X className="w-5 h-5" />
           </button>
@@ -208,16 +216,13 @@ export function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EBF7EE] border border-[#BDE8C7] text-[#00A86B] text-[10px] font-extrabold">
-              <Lock className="w-3 h-3" /> Live console
-            </div>
-            <div className="flex items-center gap-2.5 bg-[#FAF6EE] border border-[#EBE5D8] rounded-2xl px-3 py-1.5">
+            <div className="flex items-center gap-2.5 bg-white border border-[#EBE5D8] rounded-2xl px-3.5 py-1.5 shadow-2xs">
               <div className="w-8 h-8 rounded-full bg-[#FFF0EB] text-[#F15A24] flex items-center justify-center">
                 <User className="w-4 h-4" />
               </div>
               <div className="hidden sm:block">
-                <p className="text-xs font-extrabold leading-tight">{adminUser.name}</p>
-                <p className="text-[10px] text-[#6B6B6B]">{adminUser.phone || adminUser.email}</p>
+                <p className="text-xs font-extrabold leading-tight text-[#1C1C1C]">{adminUser.name || 'Ride Bhai Admin'}</p>
+                <p className="text-[10px] text-[#6B6B6B] font-bold">{adminUser.email || 'admin@ridebhai.com'}</p>
               </div>
             </div>
             <button
@@ -252,6 +257,7 @@ export function App() {
               {activeTab === 'chats' && <AdminChatsView />}
               {activeTab === 'support-tickets' && <SupportTicketsView />}
               {activeTab === 'plans' && <PlansCatalogView />}
+              {activeTab === 'subscribers' && <PlanSubscribersView />}
               {activeTab === 'payments' && <AllPaymentsView />}
               {activeTab === 'legal' && <LegalPagesView />}
               {activeTab === 'settings' && (

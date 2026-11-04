@@ -10,6 +10,7 @@ export type AdminTab =
   | 'deals'
   | 'chats'
   | 'plans'
+  | 'subscribers'
   | 'payments'
   | 'support-tickets'
   | 'legal'

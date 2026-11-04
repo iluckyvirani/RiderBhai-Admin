@@ -1,5 +1,6 @@
 export type AdminUserRow = {
   id: string;
+  displayId?: string;
   phone: string;
   name: string;
   email: string;
@@ -18,6 +19,7 @@ export type VehicleVerification = 'pending_verification' | 'verified' | 'rejecte
 
 export type AdminVehicleRow = {
   id: string;
+  displayId?: string;
   make: string;
   model: string;
   year?: number;
@@ -43,6 +45,7 @@ export type AdminVehicleRow = {
 
 export type AdminDriverRow = {
   id?: string;
+  displayId?: string;
   userId: string;
   name: string;
   email: string;
@@ -72,6 +75,7 @@ export function isListedAdmin(row: { phone?: string; email?: string }) {
 export function mapAdminUser(row: any): AdminUserRow {
   return {
     id: row.id,
+    displayId: row.display_id || undefined,
     phone: row.phone || '',
     name: row.name || '',
     email: row.email || '',
@@ -90,6 +94,7 @@ export function mapAdminUser(row: any): AdminUserRow {
 export function mapAdminVehicle(row: any): AdminVehicleRow {
   return {
     id: row.id,
+    displayId: row.display_id || undefined,
     make: row.make || '',
     model: row.model || '',
     year: row.year || undefined,
@@ -122,6 +127,7 @@ export function mapAdminVehicle(row: any): AdminVehicleRow {
 export function mapAdminDriver(row: any): AdminDriverRow {
   return {
     id: row.id,
+    displayId: row.display_id || undefined,
     userId: row.user_id,
     name: row.name || '',
     email: row.email || '',

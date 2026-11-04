@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IdCard, Search, MapPin, ChevronRight, Ban, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { IdCard, Search, MapPin, ChevronRight, Ban, CheckCircle2, ShieldAlert, Tag } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import {
@@ -8,6 +8,7 @@ import {
   mapAdminDriver,
   type AdminDriverRow,
 } from '../../lib/directory';
+import { formatDriverId } from '../../lib/displayId';
 import { isPreviewableImage } from '../../lib/kyc';
 import { AdminPageSkeleton } from '../common/AdminLoading';
 import { DriverDetailsView } from './DriverDetailsView';
@@ -88,8 +89,10 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
     if (filter === 'rejected' && driver.verificationStatus !== 'rejected') return false;
     if (filter === 'blocked' && driver.verificationStatus !== 'blocked') return false;
     const q = searchTerm.toLowerCase();
+    const driverId = (driver.displayId || formatDriverId(driver.id)).toLowerCase();
     return (
       !q ||
+      driverId.includes(q) ||
       driver.name.toLowerCase().includes(q) ||
       driver.phone.includes(searchTerm) ||
       driver.email.toLowerCase().includes(q) ||
@@ -146,7 +149,7 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
           <input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search driver, phone, city…"
+            placeholder="Search Driver ID (e.g. RB-DR-1001), driver, phone, city…"
             className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
           />
         </div>
@@ -210,8 +213,14 @@ export const AllDriversView: React.FC<{ hideTitle?: boolean; verifiedOnly?: bool
                         {(driver.name || 'D').slice(0, 1)}
                       </div>
                     )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-extrabold truncate">{driver.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-extrabold truncate">{driver.name}</p>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl text-[10px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs whitespace-nowrap">
+                          <Tag className="w-2.5 h-2.5 text-[#F15A24]" />
+                          {driver.displayId || formatDriverId(driver.id)}
+                        </span>
+                      </div>
                       <p className="text-[11px] text-[#6B6B6B] font-mono">+91 {driver.phone}</p>
                       <p className="text-[11px] text-[#6B6B6B] truncate">{driver.email}</p>
                     </div>

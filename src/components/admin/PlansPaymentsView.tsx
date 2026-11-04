@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Search, Sparkles, Pencil, Trash2, Plus, X, Check } from 'lucide-react';
+import { CreditCard, Search, Sparkles, Pencil, Trash2, Plus, X, Check, Tag } from 'lucide-react';
 import { api, getToken } from '../../lib/api';
+import { formatUserId } from '../../lib/displayId';
 import { AdminPageSkeleton, ButtonSpinner } from '../common/AdminLoading';
 import { EmptyState } from '../common/EmptyState';
 
@@ -18,6 +19,8 @@ type Plan = {
 
 type Sub = {
   id: string;
+  user_id?: string;
+  user_display_id?: string;
   plan_name: string;
   price: number;
   duration_days: number;
@@ -430,13 +433,16 @@ export const PlansCatalogView: React.FC = () => {
 };
 
 function paymentMethodLabel(method?: string) {
-  if (method === 'razorpay') return 'Razorpay';
-  if (method === 'card') return 'Card';
-  return 'Self transfer';
+  if (!method) return 'UPI';
+  const m = method.toLowerCase();
+  if (m === 'card') return 'Card';
+  if (m === 'netbanking') return 'Netbanking';
+  if (m === 'wallet') return 'Wallet';
+  return 'UPI';
 }
 
 export const AllPaymentsView: React.FC = () => {
-  const [filter, setFilter] = useState<'all' | 'active' | 'razorpay' | 'self_transfer' | 'card'>('all');
+  const [filter, setFilter] = useState<'all' | 'upi' | 'card'>('all');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<Sub[]>([]);
   const [loading, setLoading] = useState(true);
@@ -458,14 +464,13 @@ export const AllPaymentsView: React.FC = () => {
 
   const q = search.toLowerCase();
   const filtered = rows.filter((row) => {
-    const live = new Date(row.expires_at).getTime() > Date.now();
-    const method = row.payment_method || 'self_transfer';
-    if (filter === 'active' && !live) return false;
-    if (filter === 'razorpay' && method !== 'razorpay') return false;
-    if (filter === 'self_transfer' && method !== 'self_transfer' && method !== 'upi') return false;
+    const method = paymentMethodLabel(row.payment_method).toLowerCase();
+    if (filter === 'upi' && method !== 'upi') return false;
     if (filter === 'card' && method !== 'card') return false;
     if (!q) return true;
+    const uid = (row.user_display_id || formatUserId(row.user_id || row.id)).toLowerCase();
     return (
+      uid.includes(q) ||
       (row.user_name || '').toLowerCase().includes(q) ||
       (row.user_phone || '').includes(search) ||
       (row.user_email || '').toLowerCase().includes(q) ||
@@ -476,10 +481,8 @@ export const AllPaymentsView: React.FC = () => {
 
   const counts = {
     all: rows.length,
-    active: rows.filter((row) => new Date(row.expires_at).getTime() > Date.now()).length,
-    razorpay: rows.filter((row) => row.payment_method === 'razorpay').length,
-    self_transfer: rows.filter((row) => row.payment_method !== 'card' && row.payment_method !== 'razorpay').length,
-    card: rows.filter((row) => row.payment_method === 'card').length,
+    upi: rows.filter((row) => paymentMethodLabel(row.payment_method) === 'UPI').length,
+    card: rows.filter((row) => paymentMethodLabel(row.payment_method) === 'Card').length,
   };
 
   return (
@@ -490,7 +493,7 @@ export const AllPaymentsView: React.FC = () => {
           All payments
         </h2>
         <p className="text-xs text-[#6B6B6B] mt-1">
-          Package purchases only. Method is self transfer (UPI) or card.
+          Package purchase transaction records.
         </p>
       </div>
       <div className="flex flex-col sm:flex-row gap-3">
@@ -499,26 +502,24 @@ export const AllPaymentsView: React.FC = () => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search user, phone, plan, txn…"
+            placeholder="Search User ID (e.g. RB-US-1001), user, phone, plan, txn…"
             className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
           />
         </div>
         <div className="flex flex-wrap gap-1">
           {(
             [
-              ['all', `All ${counts.all}`],
-              ['active', `Active ${counts.active}`],
-              ['razorpay', `Razorpay ${counts.razorpay}`],
-              ['self_transfer', `Self transfer ${counts.self_transfer}`],
-              ['card', `Card ${counts.card}`],
+              ['all', `All (${counts.all})`],
+              ['upi', `UPI (${counts.upi})`],
+              ['card', `Card (${counts.card})`],
             ] as const
           ).map(([id, label]) => (
             <button
               key={id}
               type="button"
               onClick={() => setFilter(id)}
-              className={`px-3 py-2 rounded-xl text-[11px] font-extrabold ${
-                filter === id ? 'bg-[#1C1C1C] text-white' : 'bg-[#FAF6EE] text-[#6B6B6B]'
+              className={`px-3 py-2 rounded-xl text-[11px] font-extrabold transition-all active-press ${
+                filter === id ? 'bg-[#1C1C1C] text-white shadow-xs' : 'bg-[#FAF6EE] text-[#6B6B6B] hover:text-[#1C1C1C]'
               }`}
             >
               {label}
@@ -535,71 +536,80 @@ export const AllPaymentsView: React.FC = () => {
           description={
             search
               ? 'No payment matches this search.'
-              : filter === 'active'
-                ? 'No users currently have an active plan.'
-                : 'No plan purchases yet.'
+              : 'No plan purchase transactions recorded yet.'
           }
         />
       )}
       {!loading && filtered.length > 0 && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-3xl border border-[#EBE5D8] bg-white">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
-                <th className="py-3 px-3">User</th>
-                <th className="py-3 px-3">Phone</th>
-                <th className="py-3 px-3">Package</th>
-                <th className="py-3 px-3">Type</th>
-                <th className="py-3 px-3">Method</th>
-                <th className="py-3 px-3">Amount</th>
-                <th className="py-3 px-3">Txn</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Bought</th>
-                <th className="py-3 px-3">Expires</th>
-                <th className="py-3 px-3">Posts left</th>
+                <th className="py-3.5 px-4">Transaction ID</th>
+                <th className="py-3.5 px-4">User ID</th>
+                <th className="py-3.5 px-4">Subscriber</th>
+                <th className="py-3.5 px-4">Phone</th>
+                <th className="py-3.5 px-4">Package</th>
+                <th className="py-3.5 px-4">Amount</th>
+                <th className="py-3.5 px-4">Method</th>
+                <th className="py-3.5 px-4 text-right">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F2ECE1]">
               {filtered.map((row) => {
-                const live = new Date(row.expires_at).getTime() > Date.now();
                 const method = paymentMethodLabel(row.payment_method);
                 return (
-                  <tr key={row.id} className="hover:bg-[#FFFDF9]">
-                    <td className="py-3 px-3 font-extrabold text-[#1C1C1C]">{row.user_name || 'Unnamed'}</td>
-                    <td className="py-3 px-3 font-mono font-bold whitespace-nowrap">
-                      {row.user_phone ? `+91 ${row.user_phone}` : '—'}
-                    </td>
-                    <td className="py-3 px-3 font-bold">{row.plan_name}</td>
-                    <td className="py-3 px-3">
-                      <span className="inline-flex rounded-full bg-[#FFF0EB] text-[#F15A24] border border-[#FFD8CB] px-2 py-0.5 text-[10px] font-extrabold">
-                        Package
+                  <tr key={row.id} className="hover:bg-[#FFFDF9] transition-colors">
+                    {/* Transaction ID */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs">
+                        <Tag className="w-3 h-3 text-[#00A86B]" />
+                        {row.txn_ref || `TXN-${(row.id || '').slice(0, 8).toUpperCase()}`}
                       </span>
                     </td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold border ${
-                          method === 'Card'
-                            ? 'bg-white text-[#1C1C1C] border-[#EBE5D8]'
-                            : 'bg-[#EBF7EE] text-[#00A86B] border-[#BDE8C7]'
-                        }`}
-                      >
+
+                    {/* User ID */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs">
+                        <Tag className="w-3 h-3 text-[#F15A24]" />
+                        {row.user_display_id || formatUserId(row.user_id || row.id)}
+                      </span>
+                    </td>
+
+                    {/* Subscriber */}
+                    <td className="py-3.5 px-4 font-extrabold text-[#1C1C1C] whitespace-nowrap">
+                      {row.user_name || 'Unnamed'}
+                    </td>
+
+                    {/* Phone */}
+                    <td className="py-3.5 px-4 font-mono font-bold text-[#6B6B6B] whitespace-nowrap">
+                      {row.user_phone ? `+91 ${row.user_phone}` : '—'}
+                    </td>
+
+                    {/* Package */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#FFF0EB] text-[#F15A24] border border-[#FFD8CB]">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        {row.plan_name}
+                      </span>
+                    </td>
+
+                    {/* Amount */}
+                    <td className="py-3.5 px-4 font-black text-sm text-[#F15A24] whitespace-nowrap">
+                      {money(row.price)}
+                    </td>
+
+                    {/* Method */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide bg-[#FAF6EE] text-[#1C1C1C] border border-[#EBE5D8]">
                         {method}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-black text-[#F15A24] whitespace-nowrap">{money(row.price)}</td>
-                    <td className="py-3 px-3 font-mono text-[11px] text-[#6B6B6B]">{row.txn_ref || '—'}</td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                          live ? 'bg-[#EBF7EE] text-[#00A86B]' : 'bg-[#FAF6EE] text-[#8A8478]'
-                        }`}
-                      >
-                        {live ? 'Active' : 'Expired'}
-                      </span>
+
+                    {/* Date */}
+                    <td className="py-3.5 px-4 text-right text-xs text-[#6B6B6B] whitespace-nowrap font-medium">
+                      {when(row.purchased_at)}
                     </td>
-                    <td className="py-3 px-3 text-[#6B6B6B] whitespace-nowrap">{when(row.purchased_at)}</td>
-                    <td className="py-3 px-3 text-[#6B6B6B] whitespace-nowrap">{when(row.expires_at)}</td>
-                    <td className="py-3 px-3 font-extrabold">{row.posts_remaining}</td>
                   </tr>
                 );
               })}

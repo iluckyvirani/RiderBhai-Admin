@@ -8,6 +8,7 @@ export type FuelType = 'electric' | 'petrol' | 'diesel' | 'cng' | 'hybrid';
 
 export interface Vehicle {
   id?: string;
+  displayId?: string;
   make: string;
   model: string;
   year: number;
@@ -33,6 +34,7 @@ export interface Vehicle {
 
 export interface CarListing {
   id: string;
+  displayId?: string;
   partnerId: string;
   partnerName: string;
   partnerPhone: string;
@@ -191,6 +193,7 @@ export type AgencyTripStatus = 'active' | 'claimed' | 'completed' | 'cancelled' 
 
 export interface AgencyTripPost {
   id: string;
+  displayId?: string;
   agencyId: string;
   agencyName: string;
   agencyPhone: string;

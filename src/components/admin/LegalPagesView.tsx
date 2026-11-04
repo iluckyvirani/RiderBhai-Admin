@@ -17,6 +17,8 @@ type SiteSettings = {
   supportPhone: string;
   supportEmail: string;
   emergencyPhone: string;
+  whatsappNumber?: string;
+  supportHours?: string;
 };
 
 type SiteFaq = {
@@ -53,6 +55,8 @@ export const LegalPagesView: React.FC = () => {
     supportPhone: '',
     supportEmail: '',
     emergencyPhone: '',
+    whatsappNumber: '',
+    supportHours: '',
   });
   const [faqs, setFaqs] = useState<SiteFaq[]>([]);
   const [newQuestion, setNewQuestion] = useState('');
@@ -285,7 +289,7 @@ export const LegalPagesView: React.FC = () => {
               value={settings.supportPhone}
               onChange={(e) => setSettings((prev) => ({ ...prev, supportPhone: e.target.value }))}
               className={field}
-              placeholder="1800-RIDE-BHAI"
+              placeholder="+91 70550 54387"
             />
           </label>
           <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
@@ -296,6 +300,24 @@ export const LegalPagesView: React.FC = () => {
               onChange={(e) => setSettings((prev) => ({ ...prev, supportEmail: e.target.value }))}
               className={field}
               placeholder="support@ridebhai.com"
+            />
+          </label>
+          <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
+            WhatsApp support number (optional)
+            <input
+              value={settings.whatsappNumber || ''}
+              onChange={(e) => setSettings((prev) => ({ ...prev, whatsappNumber: e.target.value }))}
+              className={field}
+              placeholder="+91 70550 54387"
+            />
+          </label>
+          <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
+            Support hours / timing
+            <input
+              value={settings.supportHours || ''}
+              onChange={(e) => setSettings((prev) => ({ ...prev, supportHours: e.target.value }))}
+              className={field}
+              placeholder="24/7 Helpline · All India"
             />
           </label>
           <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">

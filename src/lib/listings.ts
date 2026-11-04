@@ -14,6 +14,7 @@ function whatsappFromPhone(phone?: string | null): string {
 export function mapCarListing(row: any): CarListing {
   return {
     id: row.id,
+    displayId: row.display_id || undefined,
     partnerId: row.partner_id,
     partnerName: row.agency_name || row.partner_name || 'Partner',
     partnerPhone: row.partner_phone || '',
@@ -56,6 +57,7 @@ export function mapTourListing(row: any): AgencyTripPost {
   const bookingTime = row.booking_time || '';
   return {
     id: row.id,
+    displayId: row.display_id || undefined,
     agencyId: row.partner_id,
     agencyName: row.agency_name,
     agencyPhone: row.partner_phone || '',

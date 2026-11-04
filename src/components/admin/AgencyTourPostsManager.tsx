@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Eye, MapPin, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, MapPin, Search, Tag, Trash2 } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { mapTourListing } from '../../lib/listings';
+import { formatTourId } from '../../lib/displayId';
 import { AgencyTripPost } from '../../types';
 import { AdminPageSkeleton } from '../common/AdminLoading';
 
@@ -95,7 +96,9 @@ export const AgencyTourPostsManager: React.FC = () => {
     if (statusFilter === 'closed' && post.status === 'active') return false;
     if (search) {
       const q = search.toLowerCase();
+      const tourId = (post.displayId || formatTourId(post.id)).toLowerCase();
       return (
+        tourId.includes(q) ||
         post.fromCity.toLowerCase().includes(q) ||
         post.toCity.toLowerCase().includes(q) ||
         post.agencyName.toLowerCase().includes(q) ||
@@ -240,7 +243,7 @@ export const AgencyTourPostsManager: React.FC = () => {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search city, agency or phone…"
+          placeholder="Search Tour ID (e.g. RB-TR-1001), city, agency or phone…"
           className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#EBE5D8] text-xs font-medium"
         />
       </div>
@@ -265,6 +268,7 @@ export const AgencyTourPostsManager: React.FC = () => {
             <thead>
               <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
                 <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Tour ID</th>
                 <th className="py-3 px-4">Route</th>
                 <th className="py-3 px-4">Agency</th>
                 <th className="py-3 px-4">Phone</th>
@@ -282,6 +286,12 @@ export const AgencyTourPostsManager: React.FC = () => {
                       {post.status}
                     </span>
                   </td>
+                  <td className="py-3.5 px-4 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-mono font-extrabold bg-white border border-[#EBE5D8] text-[#1C1C1C] shadow-2xs">
+                      <Tag className="w-3 h-3 text-[#F15A24]" />
+                      {post.displayId || formatTourId(post.id)}
+                    </span>
+                  </td>
                   <td className="py-3.5 px-4">
                     <p className="font-extrabold text-[#1C1C1C] inline-flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
@@ -291,6 +301,9 @@ export const AgencyTourPostsManager: React.FC = () => {
                   <td className="py-3.5 px-4 font-bold text-[#1C1C1C]">{post.agencyName || '—'}</td>
                   <td className="py-3.5 px-4 font-mono font-bold whitespace-nowrap">
                     {post.agencyPhone ? `+91 ${post.agencyPhone}` : '—'}
+                  </td>
+                  <td className="py-3.5 px-4 font-bold text-[#1C1C1C] whitespace-nowrap">
+                    {post.passengers ? `${post.passengers} pax` : '—'}
                   </td>
                   <td className="py-3.5 px-4 font-extrabold text-[#F15A24] whitespace-nowrap">
                     {post.totalCustomerPrice > 0 ? money(post.totalCustomerPrice) : 'Quotation'}
