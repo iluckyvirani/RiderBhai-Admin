@@ -435,6 +435,7 @@ export const PlansCatalogView: React.FC = () => {
 function paymentMethodLabel(method?: string) {
   if (!method) return 'UPI';
   const m = method.toLowerCase();
+  if (m === 'autopay' || m === 'auto_renew') return 'Auto-Pay';
   if (m === 'card') return 'Card';
   if (m === 'netbanking') return 'Netbanking';
   if (m === 'wallet') return 'Wallet';

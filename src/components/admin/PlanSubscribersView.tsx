@@ -24,6 +24,7 @@ export type SubscriberRow = {
   payment_method?: string;
   txn_ref?: string;
   is_active?: boolean;
+  auto_pay?: boolean;
 };
 
 function money(n: number) {
@@ -37,10 +38,10 @@ function when(value?: string) {
   return d.toLocaleString('en-IN', { dateStyle: 'medium' });
 }
 
-export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 'inactive' }> = ({
+export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 'autopay' | 'inactive' }> = ({
   initialFilter = 'all',
 }) => {
-  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>(initialFilter);
+  const [filter, setFilter] = useState<'all' | 'active' | 'autopay' | 'inactive'>(initialFilter);
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<SubscriberRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,8 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
     setLoading(true);
     setError('');
     try {
-      const data = await api<SubscriberRow[]>(`/admin/subscribers?status=${filter}`);
+      const apiStatus = filter === 'autopay' ? 'all' : filter;
+      const data = await api<SubscriberRow[]>(`/admin/subscribers?status=${apiStatus}`);
       setRows(data || []);
     } catch (err: any) {
       setError(err?.message || 'Could not load plan subscribers.');
@@ -74,6 +76,7 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
     const live = row.is_active ?? new Date(row.expires_at).getTime() > Date.now();
     if (filter === 'active' && !live) return false;
     if (filter === 'inactive' && live) return false;
+    if (filter === 'autopay' && !row.auto_pay) return false;
 
     if (!q) return true;
     const userId = (row.user_display_id || formatUserId(row.user_id)).toLowerCase();
@@ -90,6 +93,7 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
   const activeCount = rows.filter(
     (r) => (r.is_active ?? new Date(r.expires_at).getTime() > Date.now())
   ).length;
+  const autoPayCount = rows.filter((r) => Boolean(r.auto_pay)).length;
   const expiredCount = rows.length - activeCount;
 
   return (
@@ -104,9 +108,13 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
             Active and expired plan subscriptions live from Neon.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-extrabold bg-[#EBF7EE] text-[#00A86B] px-3 py-1.5 rounded-2xl border border-[#BDE8C7] w-fit">
             {activeCount} active
+          </span>
+          <span className="text-xs font-extrabold bg-[#EBF7EE] text-[#00A86B] px-3 py-1.5 rounded-2xl border border-[#BDE8C7] w-fit flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#00A86B] animate-pulse"></span>
+            {autoPayCount} Auto-Pay ON
           </span>
           <span className="text-xs font-extrabold bg-[#FAF6EE] text-[#6B6B6B] px-3 py-1.5 rounded-2xl border border-[#EBE5D8] w-fit">
             {expiredCount} expired
@@ -125,7 +133,7 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
           />
         </div>
         <div className="flex flex-wrap gap-1 bg-[#FAF6EE] p-1 rounded-2xl border border-[#EBE5D8]">
-          {(['all', 'active', 'inactive'] as const).map((key) => (
+          {(['all', 'active', 'autopay', 'inactive'] as const).map((key) => (
             <button
               key={key}
               type="button"
@@ -134,7 +142,7 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
                 filter === key ? 'bg-[#1C1C1C] text-white shadow-xs' : 'text-[#6B6B6B] hover:text-[#1C1C1C]'
               }`}
             >
-              {key === 'inactive' ? 'Inactive / Expired' : key}
+              {key === 'inactive' ? 'Inactive / Expired' : key === 'autopay' ? 'Auto-Pay ON' : key}
             </button>
           ))}
         </div>
@@ -152,14 +160,16 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
               ? 'No subscription matches this search.'
               : filter === 'active'
                 ? 'No active subscriptions at the moment.'
-                : 'No expired subscriptions found.'
+                : filter === 'autopay'
+                  ? 'No users with Auto-Pay enabled found.'
+                  : 'No expired subscriptions found.'
           }
         />
       )}
 
       {!loading && filtered.length > 0 && (
         <div className="overflow-x-auto rounded-3xl border border-[#EBE5D8] bg-white">
-          <table className="w-full text-left text-xs border-collapse min-w-[940px]">
+          <table className="w-full text-left text-xs border-collapse min-w-[1020px]">
             <thead>
               <tr className="border-b border-[#EBE5D8] text-[#6B6B6B] uppercase font-bold text-[10px] tracking-wider bg-[#FAF6EE]/50">
                 <th className="py-3 px-4">User ID</th>
@@ -168,6 +178,7 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
                 <th className="py-3 px-4">Plan</th>
                 <th className="py-3 px-4">Amount</th>
                 <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Auto-Pay</th>
                 <th className="py-3 px-4">Purchased</th>
                 <th className="py-3 px-4">Expires</th>
                 <th className="py-3 px-4">Posts Left</th>
@@ -214,6 +225,18 @@ export const PlanSubscribersView: React.FC<{ initialFilter?: 'all' | 'active' | 
                         {live ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                         {live ? 'Active' : 'Expired'}
                       </span>
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      {sub.auto_pay ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#EBF7EE] text-[#00A86B] border border-[#BDE8C7] shadow-2xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#00A86B] animate-pulse"></span>
+                          Auto-Pay ON
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF6EE] text-[#8A8478] border border-[#EBE5D8]">
+                          Off
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-4 text-[#6B6B6B] whitespace-nowrap">
                       {when(sub.purchased_at)}

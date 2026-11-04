@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Users, Search, MapPin, ShieldCheck, Eye, Pencil, Trash2, Ban, CheckCircle, ShieldAlert, Tag } from 'lucide-react';
+import { Users, Search, MapPin, ShieldCheck, Eye, Pencil, Trash2, Ban, CheckCircle, ShieldAlert, Tag, Landmark } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { isListedAdmin, kycClass, kycLabel, mapAdminUser, type AdminUserRow } from '../../lib/directory';
@@ -115,7 +115,11 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
       user.phone.includes(searchTerm) ||
       user.email.toLowerCase().includes(q) ||
       (user.city || '').toLowerCase().includes(q) ||
-      (user.agencyName || '').toLowerCase().includes(q)
+      (user.agencyName || '').toLowerCase().includes(q) ||
+      (user.bankName || '').toLowerCase().includes(q) ||
+      (user.accountNumber || '').includes(q) ||
+      (user.ifsc || '').toLowerCase().includes(q) ||
+      (user.upiId || '').toLowerCase().includes(q)
     );
   });
 
@@ -180,6 +184,7 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">City</th>
               <th className="py-3 px-4">Tour agency</th>
+              <th className="py-3 px-4">Bank details</th>
               <th className="py-3 px-4">KYC</th>
               <th className="py-3 px-4">Plan</th>
               <th className="py-3 px-4">Joined</th>
@@ -226,6 +231,29 @@ export const AllUsersView: React.FC<{ verifiedOnly?: boolean }> = ({ verifiedOnl
                 </td>
                 <td className="py-3.5 px-4 font-bold text-[#1C1C1C]">
                   {user.agencyName || <span className="text-[#B8B2A6] font-bold">—</span>}
+                </td>
+                <td className="py-3.5 px-4">
+                  {user.hasBank || user.bankName || user.accountNumber ? (
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1 font-extrabold text-[#1C1C1C] text-xs">
+                        <Landmark className="w-3.5 h-3.5 text-[#F15A24] shrink-0" />
+                        <span className="truncate max-w-[130px]">{user.bankName || 'Bank'}</span>
+                      </div>
+                      <p className="font-mono text-[11px] font-bold text-[#6B6B6B]">
+                        A/C: {user.accountNumber ? `••••${user.accountNumber.slice(-4)}` : '—'}
+                      </p>
+                      <p className="font-mono text-[10px] text-[#8A8478]">
+                        IFSC: {user.ifsc || '—'}
+                      </p>
+                      {user.upiId && (
+                        <p className="text-[10px] text-[#00A86B] font-semibold truncate max-w-[130px]">
+                          UPI: {user.upiId}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[#B8B2A6] text-[11px] font-bold">— Not added —</span>
+                  )}
                 </td>
                 <td className="py-3.5 px-4">
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-extrabold text-[10px] border ${kycClass(user.profileStatus)}`}>

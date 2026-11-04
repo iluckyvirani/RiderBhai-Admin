@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, XCircle, Search, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, XCircle, Search, ShieldCheck, Landmark } from 'lucide-react';
 import { EmptyState } from '../common/EmptyState';
 import { api, getToken } from '../../lib/api';
 import { mapKycUser, type KycUser } from '../../lib/kyc';
@@ -137,6 +137,36 @@ export const UserKycQueue: React.FC<{ hideTitle?: boolean }> = ({ hideTitle }) =
             <div className="grid grid-cols-2 gap-2">
               <DocumentPreview label="Aadhaar" src={user.aadhaarDoc} />
               <DocumentPreview label="Selfie" src={user.selfieDoc} emptyText={user.selfieName || 'Not uploaded'} />
+            </div>
+
+            {/* Bank Details section */}
+            <div className="p-3 rounded-2xl bg-white border border-[#EBE5D8] space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-[#F15A24]">
+                <Landmark className="w-3.5 h-3.5 text-[#F15A24]" />
+                <span>Bank & Settlement Account</span>
+              </div>
+              {user.hasBank || user.bankName || user.accountNumber ? (
+                <div className="text-xs space-y-0.5">
+                  <p className="font-extrabold text-[#1C1C1C]">
+                    {user.bankName || 'Bank'} · <span className="font-normal text-[#6B6B6B]">{user.accountHolderName || user.name}</span>
+                  </p>
+                  <p className="font-mono text-[11px] font-bold text-[#1C1C1C]">
+                    A/C: {user.accountNumber || '—'} · IFSC: {user.ifsc || '—'}
+                  </p>
+                  {user.branchName && (
+                    <p className="text-[10px] text-[#6B6B6B]">Branch: {user.branchName}</p>
+                  )}
+                  {user.upiId && (
+                    <p className="text-[11px] text-[#00A86B] font-bold">
+                      UPI: <span className="font-mono">{user.upiId}</span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[11px] text-[#8A8478] font-bold italic">
+                  No bank details submitted yet.
+                </p>
+              )}
             </div>
             {user.profileStatus === 'pending_verification' && (
               <div className="flex gap-2">

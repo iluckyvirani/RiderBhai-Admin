@@ -13,6 +13,15 @@ export type AdminUserRow = {
   isBlocked: boolean;
   blockedReason?: string;
   createdAt: string;
+  // Bank details
+  hasBank?: boolean;
+  bankName?: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  ifsc?: string;
+  branchName?: string;
+  accountType?: string;
+  upiId?: string;
 };
 
 export type VehicleVerification = 'pending_verification' | 'verified' | 'rejected' | 'blocked';
@@ -88,6 +97,14 @@ export function mapAdminUser(row: any): AdminUserRow {
     isBlocked: Boolean(row.is_blocked),
     blockedReason: row.blocked_reason || undefined,
     createdAt: row.created_at || '',
+    hasBank: Boolean(row.has_bank || row.bank_name || row.account_number),
+    bankName: row.bank_name || undefined,
+    accountHolderName: row.account_holder_name || undefined,
+    accountNumber: row.account_number || undefined,
+    ifsc: row.ifsc || undefined,
+    branchName: row.branch_name || undefined,
+    accountType: row.account_type || undefined,
+    upiId: row.upi_id || undefined,
   };
 }
 
