@@ -18,6 +18,7 @@ type SiteSettings = {
   supportEmail: string;
   emergencyPhone: string;
   whatsappNumber?: string;
+  whatsappMessage?: string;
   supportHours?: string;
 };
 
@@ -56,6 +57,7 @@ export const LegalPagesView: React.FC = () => {
     supportEmail: '',
     emergencyPhone: '',
     whatsappNumber: '',
+    whatsappMessage: '',
     supportHours: '',
   });
   const [faqs, setFaqs] = useState<SiteFaq[]>([]);
@@ -310,6 +312,19 @@ export const LegalPagesView: React.FC = () => {
               className={field}
               placeholder="+91 70550 54387"
             />
+          </label>
+          <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
+            WhatsApp chat message (sticky widget)
+            <textarea
+              value={settings.whatsappMessage || ''}
+              onChange={(e) => setSettings((prev) => ({ ...prev, whatsappMessage: e.target.value }))}
+              rows={2}
+              className={`${field} font-medium`}
+              placeholder="Hi Ride Bhai! I need help with booking a car or tour."
+            />
+            <span className="mt-1 block text-[10px] font-medium normal-case text-[#9E9E9E]">
+              Pre-fills the message when someone taps the WhatsApp bubble on the website.
+            </span>
           </label>
           <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
             Support hours / timing
