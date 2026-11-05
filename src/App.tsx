@@ -41,6 +41,8 @@ import { LegalPagesView } from './components/admin/LegalPagesView';
 import { api, getToken, setToken } from './lib/api';
 import type { AdminTab } from './lib/tabs';
 import { SessionSplash } from './components/common/AdminLoading';
+import { useNewDealAlerts } from './hooks/useNewDealAlerts';
+import { NewDealAlertPopup } from './components/common/NewDealAlertPopup';
 
 export type { AdminTab };
 
@@ -58,6 +60,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [kycKind, setKycKind] = useState<KycKind>('users');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { current: dealAlert, dismiss: dismissDealAlert } = useNewDealAlerts(Boolean(adminUser));
 
   useEffect(() => {
     const boot = async () => {
@@ -147,6 +150,17 @@ export function App() {
 
   return (
     <div className="h-screen bg-[#F4F1EA] text-[#1C1C1C] flex font-sans overflow-hidden">
+      {dealAlert && (
+        <NewDealAlertPopup
+          deal={dealAlert}
+          onDismiss={dismissDealAlert}
+          onView={() => {
+            dismissDealAlert();
+            setActiveTab('deals');
+          }}
+        />
+      )}
+
       {sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 lg:hidden" />
       )}

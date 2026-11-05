@@ -33,6 +33,27 @@ export default {
         warning: '#F59E0B',
         gold: '#F7C948',
       },
+      animation: {
+        'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'ring-pulse': 'ringPulse 1.4s ease-out infinite',
+        'shrink-bar': 'shrinkBar linear forwards',
+      },
+      keyframes: {
+        slideInRight: {
+          '0%': { transform: 'translateX(120%)', opacity: '0' },
+          '60%': { transform: 'translateX(-6px)', opacity: '1' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        ringPulse: {
+          '0%': { boxShadow: '0 0 0 0 rgba(241, 90, 36, 0.45)' },
+          '70%': { boxShadow: '0 0 0 10px rgba(241, 90, 36, 0)' },
+          '100%': { boxShadow: '0 0 0 0 rgba(241, 90, 36, 0)' },
+        },
+        shrinkBar: {
+          '0%': { width: '100%' },
+          '100%': { width: '0%' },
+        },
+      },
     },
   },
   plugins: [],
