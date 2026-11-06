@@ -7,6 +7,7 @@ export type AdminTab =
   | 'car-catalog'
   | 'live-cars'
   | 'agency-tour-posts'
+  | 'hotels'
   | 'deals'
   | 'chats'
   | 'plans'

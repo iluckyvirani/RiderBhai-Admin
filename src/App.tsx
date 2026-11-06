@@ -20,6 +20,7 @@ import {
   Tags,
   LifeBuoy,
   UserCheck,
+  Building2,
 } from 'lucide-react';
 import { Logo } from './components/common/Logo';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
@@ -28,6 +29,7 @@ import { InquiriesDesk } from './components/admin/InquiriesDesk';
 import { AdminChatsView } from './components/admin/AdminChatsView';
 import { AllCarListingsView } from './components/admin/AllCarListingsView';
 import { AgencyTourPostsManager } from './components/admin/AgencyTourPostsManager';
+import { HotelsManager } from './components/admin/HotelsManager';
 import { AllUsersView } from './components/admin/AllUsersView';
 import { AllDriversView } from './components/admin/AllDriversView';
 import { AllVehiclesView } from './components/admin/AllVehiclesView';
@@ -119,6 +121,7 @@ export function App() {
     { id: 'car-catalog', label: 'Car catalog', icon: Tags },
     { id: 'live-cars', label: 'Live cars', icon: Radio },
     { id: 'agency-tour-posts', label: 'All tours', icon: MapPin },
+    { id: 'hotels', label: 'Hotels', icon: Building2 },
     { id: 'deals', label: 'Inquiries', icon: Phone },
     { id: 'chats', label: 'Direct chats', icon: MessageCircle },
     { id: 'support-tickets', label: 'Support tickets', icon: LifeBuoy },
@@ -138,6 +141,7 @@ export function App() {
     'car-catalog': 'Car catalog',
     'live-cars': 'Live cars',
     'agency-tour-posts': 'All tours',
+    hotels: 'Hotels',
     deals: 'Inquiries',
     chats: 'Direct chats',
     'support-tickets': 'Support & help tickets',
@@ -267,6 +271,7 @@ export function App() {
               {activeTab === 'car-catalog' && <CarCatalogView />}
               {activeTab === 'live-cars' && <AllCarListingsView />}
               {activeTab === 'agency-tour-posts' && <AgencyTourPostsManager />}
+              {activeTab === 'hotels' && <HotelsManager />}
               {activeTab === 'deals' && <InquiriesDesk />}
               {activeTab === 'chats' && <AdminChatsView />}
               {activeTab === 'support-tickets' && <SupportTicketsView />}
