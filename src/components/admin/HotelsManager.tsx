@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Building2, ImagePlus, Pencil, Plus, Search, Star, Trash2, Video, X } from 'lucide-react';
+import { ArrowLeft, Building2, ImagePlus, Pencil, Plus, Search, Star, Trash2, Video, X } from 'lucide-react';
 import { api, getToken } from '../../lib/api';
 import { uploadToCloudinary } from '../../lib/upload';
 import { AdminPageSkeleton, ButtonSpinner } from '../common/AdminLoading';
@@ -17,10 +17,14 @@ type Hotel = {
   price_high: number;
   rating: number;
   rating_count: number;
+  star_category?: number | null;
+  nearby_places?: NearbyPlace[] | string;
   image_urls: string[] | string;
   video_url?: string;
   status: 'active' | 'inactive';
 };
+
+type NearbyPlace = { name: string; distance: string };
 
 type HotelForm = {
   title: string;
@@ -33,6 +37,8 @@ type HotelForm = {
   priceHigh: string;
   rating: string;
   ratingCount: string;
+  starCategory: string;
+  nearbyPlaces: NearbyPlace[];
   imageUrls: string[];
   videoUrl: string;
   status: 'active' | 'inactive';
@@ -51,6 +57,16 @@ function imagesOf(hotel: Hotel): string[] {
   }
 }
 
+function placesOf(hotel: Hotel): NearbyPlace[] {
+  if (Array.isArray(hotel.nearby_places)) return hotel.nearby_places;
+  try {
+    const parsed = JSON.parse(hotel.nearby_places || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function emptyForm(): HotelForm {
   return {
     title: '',
@@ -63,6 +79,8 @@ function emptyForm(): HotelForm {
     priceHigh: '',
     rating: '0',
     ratingCount: '0',
+    starCategory: '',
+    nearbyPlaces: [],
     imageUrls: [],
     videoUrl: '',
     status: 'active',
@@ -81,6 +99,8 @@ function formFromHotel(hotel: Hotel): HotelForm {
     priceHigh: String(hotel.price_high ?? ''),
     rating: String(hotel.rating ?? 0),
     ratingCount: String(hotel.rating_count ?? 0),
+    starCategory: hotel.star_category ? String(hotel.star_category) : '',
+    nearbyPlaces: placesOf(hotel),
     imageUrls: imagesOf(hotel),
     videoUrl: hotel.video_url || '',
     status: hotel.status === 'inactive' ? 'inactive' : 'active',
@@ -206,6 +226,8 @@ export const HotelsManager: React.FC = () => {
       priceHigh,
       rating: Number(form.rating) || 0,
       ratingCount: Number(form.ratingCount) || 0,
+      starCategory: form.starCategory ? Number(form.starCategory) : null,
+      nearbyPlaces: form.nearbyPlaces.filter((p) => p.name.trim() && p.distance.trim()),
       imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
       status: form.status,
@@ -242,152 +264,26 @@ export const HotelsManager: React.FC = () => {
     }
   };
 
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-extrabold flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-[#F15A24]" />
-            Hotels
-          </h2>
-          <p className="text-xs text-[#6B6B6B] mt-1">
-            Hotels shown on the website hotels page, with photos, video, pricing and rating.
-          </p>
-        </div>
+  if (editing) {
+    return (
+      <div className="space-y-4 max-w-8xl">
         <button
           type="button"
-          onClick={openNew}
-          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[#F15A24] px-4 py-2.5 text-xs font-extrabold text-white"
+          onClick={() => setEditing(null)}
+          className="text-xs font-extrabold text-[#F15A24] inline-flex items-center gap-1"
         >
-          <Plus className="w-4 h-4" /> Add hotel
+          <ArrowLeft className="w-4 h-4" /> All hotels
         </button>
-      </div>
 
-      <div className="flex flex-wrap gap-2">
-        {(['all', 'active', 'inactive'] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStatusFilter(s)}
-            className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold border capitalize ${
-              statusFilter === s ? 'bg-[#1C1C1C] text-white border-[#1C1C1C]' : 'bg-white text-[#6B6B6B] border-[#EBE5D8]'
-            }`}
-          >
-            {s === 'all' ? `All (${hotels.length})` : s}
-          </button>
-        ))}
-      </div>
+        <div className="rounded-3xl border border-[#EBE5D8] bg-white p-5 sm:p-6">
+          <h3 className="text-lg font-black text-[#1C1C1C]">
+            {editing === 'new' ? 'Add hotel' : `Edit ${editing.title}`}
+          </h3>
+          <p className="text-xs text-[#6B6B6B] mt-1 mb-4">
+            Shown on the website hotels page with photos, video, pricing, star category and rating.
+          </p>
 
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-3 text-[#6B6B6B]" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search title, city or state…"
-          className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
-        />
-      </div>
-
-      {error && <p className="text-xs font-bold text-red-600 bg-red-50 p-3 rounded-2xl">{error}</p>}
-      {loading && <AdminPageSkeleton variant="table" rows={6} />}
-      {!loading && filtered.length === 0 && (
-        <EmptyState
-          icon={Building2}
-          title="No record found"
-          description={search || statusFilter !== 'all' ? 'No hotel matches this filter.' : 'Add the first hotel.'}
-        />
-      )}
-
-      {!loading && filtered.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-[#EBE5D8]">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#FAF6EE] text-[10px] uppercase tracking-wider text-[#8A8478]">
-              <tr>
-                <th className="px-3 py-2.5 font-extrabold">Hotel</th>
-                <th className="px-3 py-2.5 font-extrabold">City / State</th>
-                <th className="px-3 py-2.5 font-extrabold">Price</th>
-                <th className="px-3 py-2.5 font-extrabold">Rating</th>
-                <th className="px-3 py-2.5 font-extrabold">Status</th>
-                <th className="px-3 py-2.5 font-extrabold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((hotel) => {
-                const images = imagesOf(hotel);
-                return (
-                  <tr key={hotel.id} className="border-t border-[#EBE5D8]">
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#EBE5D8] overflow-hidden flex items-center justify-center shrink-0">
-                          {images[0] ? (
-                            <img src={images[0]} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <Building2 className="w-4 h-4 text-[#D8D0C2]" />
-                          )}
-                        </div>
-                        <span className="font-extrabold">{hotel.title}</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 font-bold text-[#6B6B6B]">
-                      {hotel.city}, {hotel.state}
-                    </td>
-                    <td className="px-3 py-2.5 font-bold">
-                      ₹{Number(hotel.price_low).toLocaleString('en-IN')}
-                      {hotel.price_high > hotel.price_low ? ` – ₹${Number(hotel.price_high).toLocaleString('en-IN')}` : ''}
-                    </td>
-                    <td className="px-3 py-2.5 font-bold">
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        {Number(hotel.rating || 0).toFixed(1)}
-                        <span className="text-[#9E9E9E]">({hotel.rating_count || 0})</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase ${
-                          hotel.status === 'inactive'
-                            ? 'bg-white text-[#8A8478] border border-[#EBE5D8]'
-                            : 'bg-[#EBF7EE] text-[#00A86B]'
-                        }`}
-                      >
-                        {hotel.status === 'inactive' ? 'Hidden' : 'Live'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(hotel)}
-                          className="inline-flex items-center gap-1 rounded-xl border border-[#EBE5D8] bg-white px-2.5 py-1.5 text-[11px] font-extrabold hover:border-[#F15A24] hover:text-[#F15A24]"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleting(hotel)}
-                          className="inline-flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-extrabold text-red-600 hover:bg-red-600 hover:text-white"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {editing && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-4 overflow-y-auto">
-          <form onSubmit={saveHotel} className="w-full max-w-lg space-y-3 rounded-3xl bg-white p-5 my-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-extrabold">{editing === 'new' ? 'Add hotel' : `Edit ${editing.title}`}</h3>
-              <button type="button" onClick={() => setEditing(null)} className="rounded-xl bg-[#FAF6EE] p-2">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+          <form onSubmit={saveHotel} className="space-y-3">
             {formError && <p className="rounded-xl bg-red-50 p-2.5 text-xs font-bold text-red-600">{formError}</p>}
 
             <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
@@ -488,6 +384,81 @@ export const HotelsManager: React.FC = () => {
                   className={field}
                 />
               </label>
+            </div>
+
+            <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
+              Star category
+              <select
+                value={form.starCategory}
+                onChange={(e) => setForm({ ...form, starCategory: e.target.value })}
+                className={field}
+              >
+                <option value="">Not set</option>
+                {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                  <option key={n} value={n}>
+                    {n} Star
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div>
+              <p className="text-[11px] font-extrabold uppercase text-[#8A8478] mb-1.5">
+                Famous nearby places (distance)
+              </p>
+              <p className="text-[10px] text-[#9E9E9E] mb-2">
+                e.g. "Taj Mahal (East Gate)" · "3.2 km". The first one shows on the website card; all show on the hotel's page.
+              </p>
+              {form.nearbyPlaces.length > 0 && (
+                <div className="flex items-center gap-2 mb-1 px-0.5">
+                  <span className="flex-1 text-[9px] font-extrabold uppercase text-[#B8B0A0]">Place name</span>
+                  <span className="w-28 shrink-0 text-[9px] font-extrabold uppercase text-[#B8B0A0]">Distance</span>
+                  <span className="w-8 shrink-0" />
+                </div>
+              )}
+              <div className="space-y-2">
+                {form.nearbyPlaces.map((place, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={place.name}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          nearbyPlaces: prev.nearbyPlaces.map((p, idx) => (idx === i ? { ...p, name: e.target.value } : p)),
+                        }))
+                      }
+                      placeholder="e.g. Taj Mahal (East Gate)"
+                      className="min-w-0 flex-1 rounded-xl border border-[#EBE5D8] bg-[#FAF6EE] px-3 py-2 text-xs font-bold text-[#1C1C1C]"
+                    />
+                    <input
+                      value={place.distance}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          nearbyPlaces: prev.nearbyPlaces.map((p, idx) => (idx === i ? { ...p, distance: e.target.value } : p)),
+                        }))
+                      }
+                      placeholder="e.g. 3.2 km"
+                      className="w-28 shrink-0 rounded-xl border border-[#EBE5D8] bg-white px-3 py-2 text-xs font-bold text-[#1C1C1C]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, nearbyPlaces: prev.nearbyPlaces.filter((_, idx) => idx !== i) }))}
+                      className="w-8 h-8 shrink-0 rounded-xl bg-red-50 text-red-600 flex items-center justify-center"
+                      title="Remove this place"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, nearbyPlaces: [...prev.nearbyPlaces, { name: '', distance: '' }] }))}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[#EBE5D8] px-3 py-2 text-[11px] font-extrabold text-[#8A8478]"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add place
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -592,6 +563,152 @@ export const HotelsManager: React.FC = () => {
               {editing === 'new' ? 'Add hotel' : 'Save changes'}
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-extrabold flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-[#F15A24]" />
+            Hotels
+          </h2>
+          <p className="text-xs text-[#6B6B6B] mt-1">
+            Hotels shown on the website hotels page, with photos, video, pricing and rating.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={openNew}
+          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[#F15A24] px-4 py-2.5 text-xs font-extrabold text-white"
+        >
+          <Plus className="w-4 h-4" /> Add hotel
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {(['all', 'active', 'inactive'] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setStatusFilter(s)}
+            className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold border capitalize ${
+              statusFilter === s ? 'bg-[#1C1C1C] text-white border-[#1C1C1C]' : 'bg-white text-[#6B6B6B] border-[#EBE5D8]'
+            }`}
+          >
+            {s === 'all' ? `All (${hotels.length})` : s}
+          </button>
+        ))}
+      </div>
+
+      <div className="relative">
+        <Search className="w-4 h-4 absolute left-3 top-3 text-[#6B6B6B]" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search title, city or state…"
+          className="w-full pl-10 pr-3 py-2.5 rounded-2xl bg-[#FAF6EE] border border-[#EBE5D8] text-xs font-bold"
+        />
+      </div>
+
+      {error && <p className="text-xs font-bold text-red-600 bg-red-50 p-3 rounded-2xl">{error}</p>}
+      {loading && <AdminPageSkeleton variant="table" rows={6} />}
+      {!loading && filtered.length === 0 && (
+        <EmptyState
+          icon={Building2}
+          title="No record found"
+          description={search || statusFilter !== 'all' ? 'No hotel matches this filter.' : 'Add the first hotel.'}
+        />
+      )}
+
+      {!loading && filtered.length > 0 && (
+        <div className="overflow-x-auto rounded-2xl border border-[#EBE5D8]">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#FAF6EE] text-[10px] uppercase tracking-wider text-[#8A8478]">
+              <tr>
+                <th className="px-3 py-2.5 font-extrabold">Hotel</th>
+                <th className="px-3 py-2.5 font-extrabold">City / State</th>
+                <th className="px-3 py-2.5 font-extrabold">Price</th>
+                <th className="px-3 py-2.5 font-extrabold">Rating</th>
+                <th className="px-3 py-2.5 font-extrabold">Status</th>
+                <th className="px-3 py-2.5 font-extrabold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((hotel) => {
+                const images = imagesOf(hotel);
+                return (
+                  <tr key={hotel.id} className="border-t border-[#EBE5D8]">
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-[#FAF6EE] border border-[#EBE5D8] overflow-hidden flex items-center justify-center shrink-0">
+                          {images[0] ? (
+                            <img src={images[0]} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Building2 className="w-4 h-4 text-[#D8D0C2]" />
+                          )}
+                        </div>
+                        <span className="font-extrabold">
+                          {hotel.title}
+                          {hotel.star_category ? (
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-[#1C1C1C] text-white text-[9px] font-extrabold align-middle">
+                              {hotel.star_category}★
+                            </span>
+                          ) : null}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 font-bold text-[#6B6B6B]">
+                      {hotel.city}, {hotel.state}
+                    </td>
+                    <td className="px-3 py-2.5 font-bold">
+                      ₹{Number(hotel.price_low).toLocaleString('en-IN')}
+                      {hotel.price_high > hotel.price_low ? ` – ₹${Number(hotel.price_high).toLocaleString('en-IN')}` : ''}
+                    </td>
+                    <td className="px-3 py-2.5 font-bold">
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        {Number(hotel.rating || 0).toFixed(1)}
+                        <span className="text-[#9E9E9E]">({hotel.rating_count || 0})</span>
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase ${
+                          hotel.status === 'inactive'
+                            ? 'bg-white text-[#8A8478] border border-[#EBE5D8]'
+                            : 'bg-[#EBF7EE] text-[#00A86B]'
+                        }`}
+                      >
+                        {hotel.status === 'inactive' ? 'Hidden' : 'Live'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(hotel)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-[#EBE5D8] bg-white px-2.5 py-1.5 text-[11px] font-extrabold hover:border-[#F15A24] hover:text-[#F15A24]"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleting(hotel)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-extrabold text-red-600 hover:bg-red-600 hover:text-white"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 

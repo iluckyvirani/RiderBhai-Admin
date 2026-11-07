@@ -56,12 +56,49 @@ interface AdminUser {
   phone?: string;
 }
 
+const ADMIN_TABS: AdminTab[] = [
+  'dashboard',
+  'kyc',
+  'users-verified',
+  'drivers-verified',
+  'cars-verified',
+  'car-catalog',
+  'live-cars',
+  'agency-tour-posts',
+  'hotels',
+  'deals',
+  'chats',
+  'support-tickets',
+  'plans',
+  'subscribers',
+  'payments',
+  'legal',
+  'settings',
+];
+
+function tabFromHash(): AdminTab {
+  const raw = window.location.hash.replace(/^#\/?/, '').trim() as AdminTab;
+  return ADMIN_TABS.includes(raw) ? raw : 'dashboard';
+}
+
 export function App() {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [checking, setChecking] = useState(true);
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [activeTab, setActiveTabState] = useState<AdminTab>(() => tabFromHash());
   const [kycKind, setKycKind] = useState<KycKind>('users');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const setActiveTab = (tab: AdminTab) => {
+    setActiveTabState(tab);
+    const hash = `#${tab}`;
+    if (window.location.hash !== hash) window.location.hash = hash;
+  };
+
+  useEffect(() => {
+    const onHashChange = () => setActiveTabState(tabFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
   const { current: dealAlert, dismiss: dismissDealAlert } = useNewDealAlerts(Boolean(adminUser));
 
   useEffect(() => {
@@ -84,8 +121,12 @@ export function App() {
           phone: me.user?.phone,
           role: 'Platform Administrator',
         });
-      } catch {
-        setToken(null);
+      } catch (err: any) {
+        // Only drop the saved session on an actual auth rejection (expired/invalid token).
+        // A network error (API unreachable, server still starting) must not sign the admin out.
+        if (err?.code === 'unauthenticated' || err?.code === 'forbidden') {
+          setToken(null);
+        }
       } finally {
         setChecking(false);
       }
