@@ -19,6 +19,7 @@ type Hotel = {
   rating_count: number;
   star_category?: number | null;
   nearby_places?: NearbyPlace[] | string;
+  map_url?: string;
   image_urls: string[] | string;
   video_url?: string;
   status: 'active' | 'inactive';
@@ -39,6 +40,7 @@ type HotelForm = {
   ratingCount: string;
   starCategory: string;
   nearbyPlaces: NearbyPlace[];
+  mapUrl: string;
   imageUrls: string[];
   videoUrl: string;
   status: 'active' | 'inactive';
@@ -81,6 +83,7 @@ function emptyForm(): HotelForm {
     ratingCount: '0',
     starCategory: '',
     nearbyPlaces: [],
+    mapUrl: '',
     imageUrls: [],
     videoUrl: '',
     status: 'active',
@@ -101,6 +104,7 @@ function formFromHotel(hotel: Hotel): HotelForm {
     ratingCount: String(hotel.rating_count ?? 0),
     starCategory: hotel.star_category ? String(hotel.star_category) : '',
     nearbyPlaces: placesOf(hotel),
+    mapUrl: hotel.map_url || '',
     imageUrls: imagesOf(hotel),
     videoUrl: hotel.video_url || '',
     status: hotel.status === 'inactive' ? 'inactive' : 'active',
@@ -228,6 +232,7 @@ export const HotelsManager: React.FC = () => {
       ratingCount: Number(form.ratingCount) || 0,
       starCategory: form.starCategory ? Number(form.starCategory) : null,
       nearbyPlaces: form.nearbyPlaces.filter((p) => p.name.trim() && p.distance.trim()),
+      mapUrl: form.mapUrl.trim(),
       imageUrls: form.imageUrls,
       videoUrl: form.videoUrl || '',
       status: form.status,
@@ -338,6 +343,21 @@ export const HotelsManager: React.FC = () => {
                 placeholder="Street, locality"
                 className={field}
               />
+            </label>
+
+            <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
+              Google Maps link
+              <input
+                type="url"
+                value={form.mapUrl}
+                onChange={(e) => setForm({ ...form, mapUrl: e.target.value })}
+                placeholder="https://maps.app.goo.gl/… or https://maps.google.com/…"
+                className={field}
+              />
+              <span className="mt-1 block text-[10px] font-medium normal-case text-[#9E9E9E]">
+                Open Google Maps, search the hotel, tap Share, and paste the link here. Shown as a "View on Map"
+                button that takes visitors straight to this location.
+              </span>
             </label>
 
             <div className="grid grid-cols-2 gap-2">
