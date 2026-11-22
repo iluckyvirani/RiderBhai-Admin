@@ -21,6 +21,8 @@ import {
   LifeBuoy,
   UserCheck,
   Building2,
+  Gift,
+  Images,
 } from 'lucide-react';
 import { Logo } from './components/common/Logo';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
@@ -30,6 +32,8 @@ import { AdminChatsView } from './components/admin/AdminChatsView';
 import { AllCarListingsView } from './components/admin/AllCarListingsView';
 import { AgencyTourPostsManager } from './components/admin/AgencyTourPostsManager';
 import { HotelsManager } from './components/admin/HotelsManager';
+import { BannersManager } from './components/admin/BannersManager';
+import { ReferralsManager } from './components/admin/ReferralsManager';
 import { AllUsersView } from './components/admin/AllUsersView';
 import { AllDriversView } from './components/admin/AllDriversView';
 import { AllVehiclesView } from './components/admin/AllVehiclesView';
@@ -66,6 +70,8 @@ const ADMIN_TABS: AdminTab[] = [
   'live-cars',
   'agency-tour-posts',
   'hotels',
+  'banners',
+  'referrals',
   'deals',
   'chats',
   'support-tickets',
@@ -163,6 +169,8 @@ export function App() {
     { id: 'live-cars', label: 'Live cars', icon: Radio },
     { id: 'agency-tour-posts', label: 'All tours', icon: MapPin },
     { id: 'hotels', label: 'Hotels', icon: Building2 },
+    { id: 'banners', label: 'Promo banners', icon: Images },
+    { id: 'referrals', label: 'Refer & Earn', icon: Gift },
     { id: 'deals', label: 'Inquiries', icon: Phone },
     { id: 'chats', label: 'Direct chats', icon: MessageCircle },
     { id: 'support-tickets', label: 'Support tickets', icon: LifeBuoy },
@@ -183,6 +191,8 @@ export function App() {
     'live-cars': 'Live cars',
     'agency-tour-posts': 'All tours',
     hotels: 'Hotels',
+    banners: 'Promo banners',
+    referrals: 'Refer & Earn',
     deals: 'Inquiries',
     chats: 'Direct chats',
     'support-tickets': 'Support & help tickets',
@@ -313,6 +323,8 @@ export function App() {
               {activeTab === 'live-cars' && <AllCarListingsView />}
               {activeTab === 'agency-tour-posts' && <AgencyTourPostsManager />}
               {activeTab === 'hotels' && <HotelsManager />}
+              {activeTab === 'banners' && <BannersManager />}
+              {activeTab === 'referrals' && <ReferralsManager />}
               {activeTab === 'deals' && <InquiriesDesk />}
               {activeTab === 'chats' && <AdminChatsView />}
               {activeTab === 'support-tickets' && <SupportTicketsView />}

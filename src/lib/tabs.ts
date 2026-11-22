@@ -8,6 +8,8 @@ export type AdminTab =
   | 'live-cars'
   | 'agency-tour-posts'
   | 'hotels'
+  | 'banners'
+  | 'referrals'
   | 'deals'
   | 'chats'
   | 'plans'

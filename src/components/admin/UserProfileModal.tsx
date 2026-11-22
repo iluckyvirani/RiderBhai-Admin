@@ -10,6 +10,9 @@ import {
   X,
   IndianRupee,
   Landmark,
+  Gift,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import {
@@ -71,6 +74,24 @@ type Payment = {
   posts_remaining: number;
 };
 
+type ReferralEarning = {
+  id: string;
+  reason: 'kyc_verified' | 'plan_trial' | 'plan_standard';
+  amount: number;
+  status: 'pending' | 'paid';
+  created_at: string;
+};
+
+type ReferredUser = {
+  id: string;
+  name: string;
+  phone: string;
+  display_id?: string;
+  profile_status: string;
+  created_at: string;
+  earnings: ReferralEarning[];
+};
+
 type ProfilePayload = {
   user: ProfileUser;
   driver: any | null;
@@ -82,9 +103,17 @@ type ProfilePayload = {
   payments: Payment[];
   activePlan: Payment | null;
   bank: Bank | null;
+  referredBy: { id: string; name: string; phone: string; display_id?: string } | null;
+  referrals: ReferredUser[];
 };
 
-type Tab = 'overview' | 'drivers' | 'cars' | 'posts' | 'tours' | 'bank' | 'deals' | 'payments';
+type Tab = 'overview' | 'drivers' | 'cars' | 'posts' | 'tours' | 'bank' | 'deals' | 'payments' | 'refer';
+
+const REFER_REASON_LABEL: Record<ReferralEarning['reason'], string> = {
+  kyc_verified: 'KYC verified',
+  plan_trial: 'Weekly / trial plan',
+  plan_standard: 'Monthly+ plan',
+};
 
 function driverKey(driver: AdminDriverRow) {
   return driver.id || `${driver.userId}-${driver.phone}`;
@@ -219,6 +248,7 @@ export function UserProfileModal({
               ['bank', 'Bank'],
               ['deals', 'Deals'],
               ['payments', 'Plans'],
+              ['refer', 'Refer'],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -600,6 +630,76 @@ export function UserProfileModal({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {!loading && user && tab === 'refer' && (
+            <div className="space-y-4">
+              <div className="rounded-3xl border border-[#EBE5D8] bg-[#FAF6EE] p-4 space-y-2">
+                <p className="text-[10px] font-extrabold uppercase text-[#8A8478] inline-flex items-center gap-1">
+                  <Gift className="h-3.5 w-3.5 text-[#F15A24]" /> Referred by
+                </p>
+                {data?.referredBy ? (
+                  <div>
+                    <p className="text-sm font-extrabold">{data.referredBy.name || 'Ride Bhai user'}</p>
+                    <p className="text-xs font-bold text-[#6B6B6B]">
+                      +91 {data.referredBy.phone} · {data.referredBy.display_id}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm font-extrabold text-[#8A8478]">N/A — no referral code used</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-[10px] font-extrabold uppercase text-[#8A8478] mb-2">
+                  Referred by this user ({data?.referrals.length || 0})
+                </p>
+                {!data?.referrals.length ? (
+                  <Empty text="This user has not referred anyone yet." />
+                ) : (
+                  <div className="space-y-2.5">
+                    {data.referrals.map((ref) => (
+                      <div key={ref.id} className="rounded-2xl border border-[#EBE5D8] bg-white p-3.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-extrabold">{ref.name || 'Ride Bhai user'}</p>
+                          <span className="text-[10px] font-bold text-[#9E9E9E]">
+                            +91 {ref.phone} · {ref.display_id}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-extrabold uppercase text-[#6B6B6B] mt-1">
+                          {ref.profile_status.replace('_', ' ')}
+                        </p>
+                        {ref.earnings.length === 0 ? (
+                          <p className="text-[11px] text-[#9E9E9E] font-semibold mt-1.5">No earning yet.</p>
+                        ) : (
+                          <div className="mt-2 space-y-1.5">
+                            {ref.earnings.map((e) => (
+                              <div key={e.id} className="flex items-center justify-between gap-2">
+                                <span className="text-[11px] text-[#6B6B6B] font-bold">
+                                  {REFER_REASON_LABEL[e.reason]}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-1 text-[11px] font-extrabold ${
+                                    e.status === 'paid' ? 'text-[#1B6B3A]' : 'text-[#F15A24]'
+                                  }`}
+                                >
+                                  {e.status === 'paid' ? (
+                                    <CheckCircle2 className="w-3 h-3" />
+                                  ) : (
+                                    <Clock className="w-3 h-3" />
+                                  )}
+                                  ₹{e.amount} {e.status === 'paid' ? 'Paid' : 'Pending'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
