@@ -5,6 +5,7 @@ export type AdminTab =
   | 'drivers-verified'
   | 'cars-verified'
   | 'car-catalog'
+  | 'car-types'
   | 'live-cars'
   | 'agency-tour-posts'
   | 'hotels'

@@ -20,7 +20,6 @@ type Banner = {
 type BannerForm = {
   title: string;
   imageUrl: string;
-  linkUrl: string;
   placement: Placement;
   sortOrder: string;
   isActive: boolean;
@@ -36,14 +35,13 @@ const field =
   'mt-1 w-full rounded-xl border border-[#EBE5D8] bg-[#FAF6EE] px-3 py-2 text-xs font-bold text-[#1C1C1C]';
 
 function emptyForm(): BannerForm {
-  return { title: '', imageUrl: '', linkUrl: '', placement: 'tours', sortOrder: '0', isActive: true };
+  return { title: '', imageUrl: '', placement: 'tours', sortOrder: '0', isActive: true };
 }
 
 function formFromBanner(b: Banner): BannerForm {
   return {
     title: b.title || '',
     imageUrl: b.image_url,
-    linkUrl: b.link_url || '',
     placement: b.placement,
     sortOrder: String(b.sort_order ?? 0),
     isActive: b.is_active !== false,
@@ -124,7 +122,6 @@ export const BannersManager: React.FC = () => {
     const payload = {
       title: form.title.trim(),
       imageUrl: form.imageUrl,
-      linkUrl: form.linkUrl.trim(),
       placement: form.placement,
       sortOrder: Number(form.sortOrder) || 0,
       isActive: form.isActive,
@@ -175,7 +172,7 @@ export const BannersManager: React.FC = () => {
         <div className="rounded-3xl border border-[#EBE5D8] bg-white p-5 sm:p-6">
           <h3 className="text-lg font-black text-[#1C1C1C]">{editing === 'new' ? 'Add banner' : 'Edit banner'}</h3>
           <p className="text-xs text-[#6B6B6B] mt-1 mb-4">
-            Shown as a horizontal slider at the top of the page you pick. Tap opens the link.
+            Shown as a horizontal slider at the top of the page you pick. Tap opens a full-size preview.
           </p>
 
           <form onSubmit={saveBanner} className="space-y-3">
@@ -220,17 +217,6 @@ export const BannersManager: React.FC = () => {
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="e.g. Diwali offer banner"
-                className={field}
-              />
-            </label>
-
-            <label className="block text-[11px] font-extrabold uppercase text-[#8A8478]">
-              Link URL (opens when tapped)
-              <input
-                type="url"
-                value={form.linkUrl}
-                onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
-                placeholder="https://…"
                 className={field}
               />
             </label>
@@ -347,7 +333,6 @@ export const BannersManager: React.FC = () => {
                   </span>
                 </div>
                 {b.title && <p className="text-xs font-extrabold truncate">{b.title}</p>}
-                {b.link_url && <p className="text-[11px] text-[#6B6B6B] truncate">{b.link_url}</p>}
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"

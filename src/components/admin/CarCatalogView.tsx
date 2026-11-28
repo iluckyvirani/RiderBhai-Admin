@@ -1,14 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Car, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { Car, Pencil, Plus, Search, Trash2, X, Layers, ArrowRight } from 'lucide-react';
 import { api, getToken } from '../../lib/api';
 import { AdminPageSkeleton, ButtonSpinner } from '../common/AdminLoading';
 import { EmptyState } from '../common/EmptyState';
 
-type BodyType = 'hatchback' | 'sedan' | 'suv' | 'muv' | 'traveler' | 'bus' | 'commercial';
+export type BodyType = string;
+
+export type CarType = {
+  id: string;
+  label: string;
+  seats?: number;
+  description?: string | null;
+  car_count?: number;
+  is_active?: boolean;
+};
 
 type TaxiCar = {
   id: string;
-  body: BodyType;
+  body: string;
   make: string;
   model: string;
   seats: number;
@@ -16,14 +25,14 @@ type TaxiCar = {
 };
 
 type CarForm = {
-  body: BodyType;
+  body: string;
   make: string;
   model: string;
   seats: string;
   is_active: boolean;
 };
 
-const BODY_TYPES: { id: BodyType; label: string }[] = [
+const DEFAULT_BODY_TYPES: { id: string; label: string }[] = [
   { id: 'hatchback', label: 'Hatchback' },
   { id: 'sedan', label: 'Sedan' },
   { id: 'suv', label: 'SUV' },
@@ -50,14 +59,15 @@ function formFromCar(car: TaxiCar): CarForm {
   };
 }
 
-function bodyLabel(body: BodyType) {
-  return BODY_TYPES.find((t) => t.id === body)?.label || body;
+interface CarCatalogViewProps {
+  onNavigateTypes?: () => void;
 }
 
-export const CarCatalogView: React.FC = () => {
+export const CarCatalogView: React.FC<CarCatalogViewProps> = ({ onNavigateTypes }) => {
   const [search, setSearch] = useState('');
-  const [bodyFilter, setBodyFilter] = useState<BodyType | ''>('');
+  const [bodyFilter, setBodyFilter] = useState<string>('');
   const [cars, setCars] = useState<TaxiCar[]>([]);
+  const [carTypes, setCarTypes] = useState<CarType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<TaxiCar | 'new' | null>(null);
@@ -76,7 +86,12 @@ export const CarCatalogView: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      setCars(await api<TaxiCar[]>('/admin/taxi-cars'));
+      const [carsData, typesData] = await Promise.all([
+        api<TaxiCar[]>('/admin/taxi-cars'),
+        api<CarType[]>('/admin/car-types').catch(() => []),
+      ]);
+      setCars(carsData || []);
+      setCarTypes(typesData && typesData.length ? typesData : DEFAULT_BODY_TYPES.map((b) => ({ ...b, seats: 5 })));
     } catch (err: any) {
       setError(err?.message || 'Could not load car catalog.');
     } finally {
@@ -87,6 +102,15 @@ export const CarCatalogView: React.FC = () => {
   useEffect(() => {
     load();
   }, []);
+
+  const typesList = useMemo(() => {
+    if (carTypes.length) return carTypes;
+    return DEFAULT_BODY_TYPES.map((b) => ({ ...b, seats: 5 }));
+  }, [carTypes]);
+
+  const bodyLabel = (body: string) => {
+    return typesList.find((t) => t.id === body)?.label || body;
+  };
 
   const makes = useMemo(
     () => [...new Set(cars.map((c) => c.make))].sort((a, b) => a.localeCompare(b)),
@@ -172,13 +196,24 @@ export const CarCatalogView: React.FC = () => {
             Makes and models shown on the website. Users can only select from this list.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[#F15A24] px-4 py-2.5 text-xs font-extrabold text-white"
-        >
-          <Plus className="w-4 h-4" /> Add car
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {onNavigateTypes && (
+            <button
+              type="button"
+              onClick={onNavigateTypes}
+              className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-white border border-[#EBE5D8] px-3.5 py-2.5 text-xs font-bold text-[#1C1C1C] hover:bg-[#FAF6EE] shadow-2xs transition active-press"
+            >
+              <Layers className="w-4 h-4 text-[#F15A24]" /> Manage Car Types
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openNew}
+            className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[#F15A24] px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:bg-[#E04F1D] transition active-press"
+          >
+            <Plus className="w-4 h-4" /> Add car
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -191,7 +226,7 @@ export const CarCatalogView: React.FC = () => {
         >
           All ({cars.length})
         </button>
-        {BODY_TYPES.map((t) => {
+        {typesList.map((t) => {
           const n = cars.filter((c) => c.body === t.id).length;
           return (
             <button
@@ -302,10 +337,17 @@ export const CarCatalogView: React.FC = () => {
               Type
               <select
                 value={form.body}
-                onChange={(e) => setForm({ ...form, body: e.target.value as BodyType })}
+                onChange={(e) => {
+                  const selectedType = typesList.find((t) => t.id === e.target.value);
+                  setForm({
+                    ...form,
+                    body: e.target.value,
+                    seats: selectedType?.seats ? String(selectedType.seats) : form.seats,
+                  });
+                }}
                 className={field}
               >
-                {BODY_TYPES.map((t) => (
+                {typesList.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.label}
                   </option>

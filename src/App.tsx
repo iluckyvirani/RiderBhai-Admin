@@ -23,6 +23,7 @@ import {
   Building2,
   Gift,
   Images,
+  Layers,
 } from 'lucide-react';
 import { Logo } from './components/common/Logo';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
@@ -38,6 +39,7 @@ import { AllUsersView } from './components/admin/AllUsersView';
 import { AllDriversView } from './components/admin/AllDriversView';
 import { AllVehiclesView } from './components/admin/AllVehiclesView';
 import { CarCatalogView } from './components/admin/CarCatalogView';
+import { CarTypesView } from './components/admin/CarTypesView';
 import { KycDesk, type KycKind } from './components/admin/KycDesk';
 import { AllPaymentsView, PlansCatalogView } from './components/admin/PlansPaymentsView';
 import { PlanSubscribersView } from './components/admin/PlanSubscribersView';
@@ -67,6 +69,7 @@ const ADMIN_TABS: AdminTab[] = [
   'drivers-verified',
   'cars-verified',
   'car-catalog',
+  'car-types',
   'live-cars',
   'agency-tour-posts',
   'hotels',
@@ -166,6 +169,7 @@ export function App() {
     { id: 'drivers-verified', label: 'All driver verified', icon: IdCard },
     { id: 'cars-verified', label: 'All cars verified', icon: Car },
     { id: 'car-catalog', label: 'Car catalog', icon: Tags },
+    { id: 'car-types', label: 'Car types', icon: Layers },
     { id: 'live-cars', label: 'Live cars', icon: Radio },
     { id: 'agency-tour-posts', label: 'All tours', icon: MapPin },
     { id: 'hotels', label: 'Hotels', icon: Building2 },
@@ -188,6 +192,7 @@ export function App() {
     'drivers-verified': 'All driver verified',
     'cars-verified': 'All cars verified',
     'car-catalog': 'Car catalog',
+    'car-types': 'Car types & body categories',
     'live-cars': 'Live cars',
     'agency-tour-posts': 'All tours',
     hotels: 'Hotels',
@@ -221,9 +226,8 @@ export function App() {
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-[#1C1C1C] text-white flex flex-col border-r border-white/10 h-screen lg:static lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-[#1C1C1C] text-white flex flex-col border-r border-white/10 h-screen lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <button
@@ -253,9 +257,8 @@ export function App() {
                   setActiveTab(item.id);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold ${
-                  isActive ? 'bg-[#F15A24] text-white' : 'text-white/70 hover:bg-white/10'
-                }`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold ${isActive ? 'bg-[#F15A24] text-white' : 'text-white/70 hover:bg-white/10'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {item.label}
@@ -319,7 +322,12 @@ export function App() {
               {activeTab === 'users-verified' && <AllUsersView verifiedOnly />}
               {activeTab === 'drivers-verified' && <AllDriversView verifiedOnly />}
               {activeTab === 'cars-verified' && <AllVehiclesView verifiedOnly />}
-              {activeTab === 'car-catalog' && <CarCatalogView />}
+              {activeTab === 'car-catalog' && (
+                <CarCatalogView onNavigateTypes={() => setActiveTab('car-types')} />
+              )}
+              {activeTab === 'car-types' && (
+                <CarTypesView onNavigateCatalog={() => setActiveTab('car-catalog')} />
+              )}
               {activeTab === 'live-cars' && <AllCarListingsView />}
               {activeTab === 'agency-tour-posts' && <AgencyTourPostsManager />}
               {activeTab === 'hotels' && <HotelsManager />}
